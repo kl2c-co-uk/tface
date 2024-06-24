@@ -1,0 +1,4 @@
+syntax: glob
+
+**.pip/pip_venv/
+**.pip/target/
