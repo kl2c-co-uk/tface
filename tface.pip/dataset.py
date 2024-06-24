@@ -59,126 +59,122 @@ def throw(message):
 	print('\n')
 	raise Exception(f"{message}\n\n")
 
-# the validation set
-root = 'target/dataset/validation/'
-labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
+def wider_set(root, images, labels):
+	# extract the images
+	with zipfile.ZipFile(images, 'r') as full:
+		for file_info in full.infolist():
+			if file_info.filename.endswith('.jpg'):
+				name = file_info.filename 
+				name = root+name[name.find('images/'):]
+				if not os.path.isfile(name):
+					ensure_directory_exists(name)
+					with open(name, 'wb') as file:
+						file.write(full.read(file_info))
 
-# extract the images
-with zipfile.ZipFile('target/wider.validation.zip', 'r') as full:
-	for file_info in full.infolist():
-		if file_info.filename.endswith('.jpg'):
-			name = file_info.filename 
-			name = root+name[name.find('images/'):]
-			if not os.path.isfile(name):
-				ensure_directory_exists(name)
-				with open(name, 'wb') as file:
-					file.write(full.read(file_info))
+	# extract the labels
+	with zipfile.ZipFile('target/wider.annotations.zip', 'r').open(labels) as file_in_zip:
+		
+		##
+		# finky recreation of an iterator
+		data = {
+			'next': 0,
+			'full': file_in_zip.read().decode('utf-8').splitlines(),
+			'more': True
+		}
+		
+		def line(data):
+			item = data['full'][data['next']]
+			data['next'] += 1
+			data['more'] = data['next'] < len(data['full'])
+			return item
 
-# extract the labels
-with zipfile.ZipFile('target/wider.annotations.zip', 'r').open(labels) as file_in_zip:
-	
-	##
-	# finky recreation of an iterator
-	data = {
-		'next': 0,
-		'full': file_in_zip.read().decode('utf-8').splitlines(),
-		'more': True
-	}
-	
-	def line(data):
-		item = data['full'][data['next']]
-		data['next'] += 1
-		data['more'] = data['next'] < len(data['full'])
-		return item
+		
+		print('')
 
-	
-	print('')
+		
+		def xml_write(xml, string):
+			xml.write(string + '\n')
 
-	
-	def xml_write(xml, string):
-		xml.write(string + '\n')
+		while data['more']:
 
-	while data['more']:
+			# read the file name for this entry
+			name = line(data)
+			if not name.endswith('.jpg'):
+				throw(f"the file `{name}` does not end with .jpg(next = {data['next']})")
 
-		# read the file name for this entry
-		name = line(data)
-		if not name.endswith('.jpg'):
-			raise Exception(f"the file `{name}` does not end with .jpg")
+			print(f'doing {name} annotation ...')
 
-		# open teh label xml file
-		xml = root+ 'annotations/' +name[:-3] + 'xml'
-		if not os.path.isfile(xml):
-			xml = safe_write(xml)
-		else:
-			xml = False
+			# open teh label xml file
+			xml = root+ 'annotations/' +name[:-3] + 'xml'
+			if not os.path.isfile(xml):
+				xml = safe_write(xml)
+			else:
+				xml = False
 
-		# load the count of targets
-		count = int(line(data))
-
-		if xml:
-			# load the image and find its dimensions
-			image = root+'images/'+name
-			if not os.path.isfile(image):
-				print('\n')
-				raise Exception(f"the file `{image}` does not exist\n\n")
-			image = cv2.imread(image)
-			if image is None:
-				throw(f'failed to load {name}')
-			height, width, channels = image.shape
-
-			# write the header for the record
-			xml_write(xml, f'<annotation>')
-			xml_write(xml, f'\t<filename>{name}</filename>')
-			xml_write(xml, f'\t<size>')
-			xml_write(xml, f'\t\t<width>{width}</width>')
-			xml_write(xml, f'\t\t<height>{height}</height>')
-			xml_write(xml, f'\t</size>')
-
-		# wander through each item in the record
-		for i in range(count):
-			text = line(data).split(' ')
-			x, y, w, h, *_ = text
+			# load the count of targets
+			count = int(line(data))
 
 			if xml:
-				xml_write(xml, f'\t<object>')
-				xml_write(xml, f'\t\t<name>face</name>')
-				xml_write(xml, f'\t\t<bndbox>')
-				xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
-				xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
-				xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
-				xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
-				xml_write(xml, f'\t\t</bndbox>')
-				xml_write(xml, f'\t</object>')
+				# load the image and find its dimensions
+				image = root+'images/'+name
+				if not os.path.isfile(image):
+					print('\n')
+					throw(f"the file `{image}` does not exist (next = {data['next']})")
+				image = cv2.imread(image)
+				if image is None:
+					throw(f'failed to load {name}')
+				height, width, channels = image.shape
 
-		if xml:
-			xml_write(xml, f'</annotation>')
-			xml.close()
+				# write the header for the record
+				xml_write(xml, f'<annotation>')
+				xml_write(xml, f'\t<filename>{name}</filename>')
+				xml_write(xml, f'\t<size>')
+				xml_write(xml, f'\t\t<width>{width}</width>')
+				xml_write(xml, f'\t\t<height>{height}</height>')
+				xml_write(xml, f'\t</size>')
+
+			# wander through each item in the record
+			if 0 == count:
+				blank = line(data).strip()
+				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+					throw('empty entry had a funky line!')
+			else:
+				for i in range(count):
+					text = line(data).split(' ')
+					x, y, w, h, *_ = text
+
+					if xml:
+						xml_write(xml, f'\t<object>')
+						xml_write(xml, f'\t\t<name>face</name>')
+						xml_write(xml, f'\t\t<bndbox>')
+						xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
+						xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
+						xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
+						xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
+						xml_write(xml, f'\t\t</bndbox>')
+						xml_write(xml, f'\t</object>')
+
+			if xml:
+				xml_write(xml, f'</annotation>')
+				xml.close()
 
 
-raise Exception('do the training set')
 
+# the validation set
+wider_set(
+	root = 'target/dataset/validation/',
+	images = 'target/wider.validation.zip',
+	labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
+)
+
+# the training set
+wider_set(
+	root = 'target/dataset/train/',
+	images = 'target/wider.training.zip',
+	labels = 'wider_face_split/wider_face_train_bbx_gt.txt'
+)
 
 
 print("data set ready - okie dokee")
-
-
-# <annotation>
-#	 <filename>image1.jpg</filename>
-#	 <size>
-#		 <width>640</width>
-#		 <height>480</height>
-#	 </size>
-#	 <object>
-#		 <name>person</name>
-#		 <bndbox>
-#			 <xmin>100</xmin>
-#			 <ymin>120</ymin>
-#			 <xmax>250</xmax>
-#			 <ymax>350</ymax>
-#		 </bndbox>
-#	 </object>
-#	 <!-- Additional objects if present -->
-# </annotation>
-
 
 
