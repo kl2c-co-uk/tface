@@ -1,12 +1,12 @@
 import os
 import requests
 
+def ensure_directory_exists(file_path):
+	directory = os.path.dirname(file_path)
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 def download_file(url, save_path):
-	def ensure_directory_exists(file_path):
-		directory = os.path.dirname(file_path)
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-    
+	
 	ensure_directory_exists(save_path)
 
 	if os.path.exists(save_path):
@@ -46,14 +46,92 @@ download_file(
 	'target/wider.annotations.zip'
 )
 
+def safe_write(path):
+	ensure_directory_exists(path)
+	return open(path, 'w')
+
+import zipfile
+import os
+
+
+# extract the images
+
+# extract the labels
+with zipfile.ZipFile('target/wider.annotations.zip', 'r').open('wider_face_split/wider_face_val_bbx_gt.txt') as file_in_zip:
+	jpeg = 'target/dataset/validation/images/'
+	into = 'target/dataset/validation/annotations/'
+	data = iter(file_in_zip.read().decode('utf-8').splitlines())
+	def line():
+		return next(data)
+	print('')
+	while data:
+		try:
+			name = line()
+			count = int(line())
+			print(f"==== {name}")
+			print(f"has {count} faces")
+
+			if not name.endswith('.jpg'):
+				raise Exception(f"the file `{name}` does not end with .jpg")
+
+			print('TODO; get height')
+			width = ' ?width? '
+			height = ' ?height? '
+
+			with safe_write(into + name[:-3] + 'xml') as xml:
+				xml.write(f'<annotation>\n')
+				xml.write(f'\t<filename>{name}</filename>\n')
+				xml.write(f'\t<size>\n')
+				xml.write(f'\t\t<width>?width?</width>\n')
+				xml.write(f'\t\t<height>?height?</height>\n')
+				xml.write(f'\t</size>\n')
+
+				for i in range(count):
+					text = line().split(' ')
+					x, y, w, h, *_ = text
+
+
+					xml.write(f'\t<object>\n')
+					xml.write(f'\t\t<name>face</name>\n')
+					xml.write(f'\t\t<bndbox>\n')
+					xml.write(f'\t\t\t<xmin>100</xmin>\n')
+					xml.write(f'\t\t\t<ymin>120</ymin>\n')
+					xml.write(f'\t\t\t<xmax>250</xmax>\n')
+					xml.write(f'\t\t\t<ymax>350</ymax>\n')
+					xml.write(f'\t\t</bndbox>\n')
+					xml.write(f'\t</object>\n')
+
+				xml.write(f'</annotation>\n')
+			print('')
+		except StopIteration:
+			data = None
+			break
+
+
+raise Exception('do the training set')
 
 
 
-# # Example usage
-# url = 'https://example.com/archive.zip'  # Replace with the actual URL of the zip file
-# save_path = 'downloaded_archive.zip'     # Specify where to save the downloaded file
+print("data set ready - okie dokee")
 
-# download_file(url, save_path)
-# print(f"Downloaded {url} to {save_path}")
+
+# <annotation>
+#     <filename>image1.jpg</filename>
+#     <size>
+#         <width>640</width>
+#         <height>480</height>
+#     </size>
+#     <object>
+#         <name>person</name>
+#         <bndbox>
+#             <xmin>100</xmin>
+#             <ymin>120</ymin>
+#             <xmax>250</xmax>
+#             <ymax>350</ymax>
+#         </bndbox>
+#     </object>
+#     <!-- Additional objects if present -->
+# </annotation>
+
 
 
