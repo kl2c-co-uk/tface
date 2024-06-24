@@ -107,46 +107,52 @@ with zipfile.ZipFile('target/wider.annotations.zip', 'r').open(labels) as file_i
 
 		# open teh label xml file
 		xml = root+ 'annotations/' +name[:-3] + 'xml'
-		xml = safe_write(xml)
+		if not os.path.isfile(xml):
+			xml = safe_write(xml)
+		else:
+			xml = False
 
 		# load the count of targets
 		count = int(line(data))
 
-		# load the image and find its dimensions
-		image = root+'images/'+name
-		if not os.path.isfile(image):
-			print('\n')
-			raise Exception(f"the file `{image}` does not exist\n\n")
-		image = cv2.imread(image)
-		if image is None:
-			throw(f'failed to load {name}')
-		height, width, channels = image.shape
+		if xml:
+			# load the image and find its dimensions
+			image = root+'images/'+name
+			if not os.path.isfile(image):
+				print('\n')
+				raise Exception(f"the file `{image}` does not exist\n\n")
+			image = cv2.imread(image)
+			if image is None:
+				throw(f'failed to load {name}')
+			height, width, channels = image.shape
 
-		# write the header for the record
-		xml_write(xml, f'<annotation>')
-		xml_write(xml, f'\t<filename>{name}</filename>')
-		xml_write(xml, f'\t<size>')
-		xml_write(xml, f'\t\t<width>{width}</width>')
-		xml_write(xml, f'\t\t<height>{height}</height>')
-		xml_write(xml, f'\t</size>')
+			# write the header for the record
+			xml_write(xml, f'<annotation>')
+			xml_write(xml, f'\t<filename>{name}</filename>')
+			xml_write(xml, f'\t<size>')
+			xml_write(xml, f'\t\t<width>{width}</width>')
+			xml_write(xml, f'\t\t<height>{height}</height>')
+			xml_write(xml, f'\t</size>')
 
 		# wander through each item in the record
 		for i in range(count):
 			text = line(data).split(' ')
 			x, y, w, h, *_ = text
 
-			xml_write(xml, f'\t<object>')
-			xml_write(xml, f'\t\t<name>face</name>')
-			xml_write(xml, f'\t\t<bndbox>')
-			xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
-			xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
-			xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
-			xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
-			xml_write(xml, f'\t\t</bndbox>')
-			xml_write(xml, f'\t</object>')
+			if xml:
+				xml_write(xml, f'\t<object>')
+				xml_write(xml, f'\t\t<name>face</name>')
+				xml_write(xml, f'\t\t<bndbox>')
+				xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
+				xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
+				xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
+				xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
+				xml_write(xml, f'\t\t</bndbox>')
+				xml_write(xml, f'\t</object>')
 
-		xml_write(xml, f'</annotation>')
-		xml.close()
+		if xml:
+			xml_write(xml, f'</annotation>')
+			xml.close()
 
 
 raise Exception('do the training set')
