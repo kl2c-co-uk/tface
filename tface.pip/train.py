@@ -6,6 +6,8 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
+from dataset import throw
+
 # Load and preprocess the dataset
 train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
 train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=(224, 224), batch_size=32, subset='training')
@@ -30,3 +32,5 @@ model.fit(train_generator, validation_data=validation_generator, epochs=10)
 
 # Save the model
 model.save('target/face_detector.h5')
+
+print('trained you say? okie dokie')

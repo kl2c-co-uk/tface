@@ -11,7 +11,7 @@ def download_file(url, save_path):
 	ensure_directory_exists(save_path)
 
 	if os.path.exists(save_path):
-			print(f"The file '{save_path}' already exists. Skipping download.")
+			# print(f"The file '{save_path}' already exists. Skipping download.")
 			return
 
 	print('this could be loonnngggg .....')
@@ -102,7 +102,7 @@ def wider_set(root, images, labels):
 			if not name.endswith('.jpg'):
 				throw(f"the file `{name}` does not end with .jpg(next = {data['next']})")
 
-			print(f'doing {name} annotation ...')
+			# print(f'doing {name} annotation ...')
 
 			# open teh label xml file
 			xml = root+ 'annotations/' +name[:-3] + 'xml'
@@ -175,6 +175,6 @@ wider_set(
 )
 
 
-print("data set ready - okie dokee")
+print("data set loaded - okie dokee")
 
 

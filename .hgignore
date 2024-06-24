@@ -2,3 +2,4 @@ syntax: glob
 
 **.pip/pip_venv/
 **.pip/target/
+**.pip/**/__pycache__/
