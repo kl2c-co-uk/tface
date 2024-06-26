@@ -8,10 +8,12 @@ from tensorflow.keras.optimizers import Adam
 
 from dataset import throw
 
+batch_size = 32
+
 # Load and preprocess the dataset
 train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
-train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=(224, 224), batch_size=32, subset='training')
-validation_generator = train_datagen.flow_from_directory('target/dataset/validation', target_size=(224, 224), batch_size=32, subset='validation')
+train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=(224, 224), batch_size=batch_size, subset='training')
+validation_generator = train_datagen.flow_from_directory('target/dataset/validation', target_size=(224, 224), batch_size=batch_size, subset='validation')
 
 # Load a pre-trained model
 base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
@@ -31,6 +33,6 @@ model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', m
 model.fit(train_generator, validation_data=validation_generator, epochs=10)
 
 # Save the model
-model.save('target/face_detector.h5')
+model.save('target/face_detector.keras')
 
 print('trained you say? okie dokie')
