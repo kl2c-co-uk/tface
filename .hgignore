@@ -1,5 +1,14 @@
 syntax: glob
 
-**.pip/pip_venv/
-**.pip/target/
-**.pip/**/__pycache__/
+*.pip/pip_venv/
+*.pip/target/
+*.pip/**/__pycache__/
+
+
+*.unity/Library/
+*.unity/Logs/
+*.unity/UserSettings/
+*.unity/*.sln
+*.unity/*.csproj
+*.unity/.vsconfig
+
