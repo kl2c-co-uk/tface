@@ -8,6 +8,8 @@ syntax: glob
 *.unity/Library/
 *.unity/Logs/
 *.unity/UserSettings/
+*.unity/obj/
+*.unity/Temp/
 *.unity/*.sln
 *.unity/*.csproj
 *.unity/.vsconfig

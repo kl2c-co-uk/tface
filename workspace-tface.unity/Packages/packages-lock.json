@@ -67,6 +67,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "peterlavalle.nug": {
+      "version": "https://gitlab.com/peterlavalle/peters-unity-stuff.git?path=/workspace-nug.unity/Packages/peterlavalle.nug",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d40b4c14ddc6e344adc8e681990461997271396c"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,
