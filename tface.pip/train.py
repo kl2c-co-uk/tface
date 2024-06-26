@@ -8,7 +8,8 @@ from tensorflow.keras.optimizers import Adam
 
 from dataset import throw
 
-batch_size = 32
+# ChatGPT said 32, but, that crashed it. 8 also worked, but, those seems faster.
+batch_size = 16
 
 # Load and preprocess the dataset
 train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
