@@ -10,7 +10,9 @@ syntax: glob
 *.unity/UserSettings/
 *.unity/obj/
 *.unity/Temp/
+*.unity/.vs/
 *.unity/*.sln
 *.unity/*.csproj
 *.unity/.vsconfig
 
+*.pip/*.venv/*/

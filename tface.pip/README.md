@@ -39,3 +39,39 @@ embarasingly - conda seems to handle my CUDA concerns for me ... so there ...
 	- `(base) λ python freeze.py`
 	- this will create `target/face_detector.tflite`
 
+## In Unity
+
+Unity's Baracuda should be sensible to use rather than trying to tape something else into Unity.
+
+So ... I need to convert my model to ONNX.
+
+The `tf2onnx` stuff needs another version ... conda a separate container?
+
+C:\Users\peter\Desktop\tface-gpu\tface.pip (tface-gpu)
+λ conda create -n newtfonnx
+λ conda activate newtfonnx
+λ conda config --add channels conda-forge
+λ conda config --add channels defaults
+λ conda config --add channels nvidia
+λ conda install cudatoolkit
+λ conda install cudnn
+
+... nowait; i need the old tensorflow to do this on windows ...
+
+???
+
+λ python -m venv tf2onnx_env
+λ "tf2onnx_env/Scripts/activate"
+
+
+pip install tf2onnx
+
+... oh ... it doesn't line up ... maybe i do need WSL for linux
+
+... or maybe i can keep doing training in the old version then conversion in a new one ...
+
+
+tf2onnx_env\Scripts\activate
+
+
+

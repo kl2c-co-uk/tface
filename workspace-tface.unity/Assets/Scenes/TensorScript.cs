@@ -1,44 +1,51 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TensorFlow;
+using Unity.Barracuda;
 
 public class TensorScript : MonoBehaviour
 {
-    private TFGraph graph;
-    private TFSession session;
-    //public TextAsset model;
+    public NNModel modelAsset;
+    private Model runtimeModel;
+    private IWorker worker;
+
     void Start()
     {
-        // Load the frozen model
-        TextAsset model = Resources.Load<TextAsset>("face_detector");
-        Debug.Assert(null != model, "loading the asset by name did not work");
+        if (modelAsset == null)
+        {
+            Debug.LogError("Model asset not set in the Inspector");
+            return;
+        }
 
-        // Create a new graph
-        graph = new TFGraph();
-        graph.Import(model.bytes);
+        // Create a runtime model
+        runtimeModel = ModelLoader.Load(modelAsset);
+        worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
-        // Create a new session
-        session = new TFSession(graph);
+        // Example: Prepare input data
+        Tensor inputTensor = new Tensor(1, 32); // Adjust dimensions as needed
+        for (int i = 0; i < 32; i++)
+        {
+            inputTensor[0, i] = 0.0f; // Replace with your input data
+        }
 
-        // Example: Predicting with the model
-        float[] input_data = new float[32]; // Your input data
-        var runner = session.GetRunner();
-        runner.AddInput(graph["input_node_name"][0], input_data);
-        runner.Fetch(graph["output_node_name"][0]);
-        var output = runner.Run();
+        // Execute the model
+        worker.Execute(inputTensor);
 
-        // Retrieve output
-        float[] result = ((float[][])output[0].GetValue(jagged: true))[0];
+        // Get the output
+        Tensor outputTensor = worker.PeekOutput();
+        float outputValue = outputTensor[0]; // Adjust based on output dimensions
 
         // Use the result
-        Debug.Log("Model prediction: " + result[0]);
+        Debug.Log("Model prediction: " + outputValue);
+
+        // Clean up
+        inputTensor.Dispose();
+        outputTensor.Dispose();
     }
 
-    // Update is called once per frame
     void OnDestroy()
     {
-        session.CloseSession();
-        graph.Dispose();
+        worker?.Dispose();
     }
 }

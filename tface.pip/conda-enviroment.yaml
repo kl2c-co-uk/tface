@@ -101,12 +101,12 @@ dependencies:
       - namex==0.0.8
       - numpy==1.26.4
       - oauthlib==3.2.2
+      - onnx==1.16.1
       - opencv-python==4.10.0.84
       - opt-einsum==3.3.0
       - optree==0.11.0
       - packaging==24.1
       - pillow==10.3.0
-      - protobuf==3.19.6
       - pyasn1==0.6.0
       - pyasn1-modules==0.4.0
       - pygments==2.18.0
