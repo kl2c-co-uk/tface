@@ -35,4 +35,7 @@ embarasingly - conda seems to handle my CUDA concerns for me ... so there ...
 	- `(base) λ python gpucheck.py`
 7. train!
 	- `(base) λ python train.py`
+7. freeze it
+	- `(base) λ python freeze.py`
+	- this will create `target/face_detector.tflite`
 
