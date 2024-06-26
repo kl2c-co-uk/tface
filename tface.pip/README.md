@@ -1,69 +1,38 @@
 
-https://chatgpt.com/c/5a811017-3ebd-4546-a84e-444a031bd5c0
+> this document was written in a sleep deprived kandor - the author does not predict that this project/subproject will last due to the author's inexperience with the subject matter
+
+original chat;
+	https://chatgpt.com/c/5a811017-3ebd-4546-a84e-444a031bd5c0
 
 
-setup like ...
+freeze chat;
+	https://chatgpt.com/c/b91f432e-ae85-4a4e-82ed-ed615e2e8057
 
-```bash
-> python -m venv pip_venv
-> "pip_venv/Scripts/activate"
-> python -m pip install --upgrade pip
-> pip install -r requirements.txt
-```
-
-... then do something to copy the "wider face" ...
+## dataset
 
 http://shuoyang1213.me/WIDERFACE/
 
+which i then unpack/cache to a layout that the tensorflow stuff can om nom nom easily
 
-maybe?
+(i did this with venv but it seems fine with MiniConda3 as well)
 
-i'm going to "tran" the thing overnight and then ... i dhunno ... i'll see if I can convert it to a C#/Unity3D program
+## MiniConda3
 
+based on "rtfm" approach i switched to the MiniConda instructions to try and get it to work with GPUs.
+embarasingly - conda seems to handle my CUDA concerns for me ... so there ...
 
-## check cuda/GPU is on
-
-need cuda 8.0 and and cudnn 5.1 (i guess?)
-
-
-```
-import tensorflow as tf
-
-# List all available devices
-devices = tf.config.list_physical_devices()
-print("Available devices:")
-for device in devices:
-    print(device)
-
-# Check TensorFlow version and GPU availability
-print("TensorFlow version:", tf.__version__)
-print("GPU available:", tf.test.is_gpu_available())
-```
-
-....
-
-trainy again with miniconda and cuda 12.5
-
-.. added a check; the dlls aren't there after all!
-
-
-# conda?
-
-install conda
-    ???
-
-setup the outer environment;
-    λ conda install -c conda-forge cudatoolkit=11 cudnn=8
-
-activate the environment
-    λ conda activate
-
-install python 3.10 in the condan environment
-    (base) λ conda install python=3.10
-
-setup the pips packages
-    (base) λ pip install -r requirements.txt
-
-run the gpu-chekc
-    (base) λ python gpucheck.py
+1. install conda
+	- https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+2. setup the outer environment;
+	- `λ conda install -c conda-forge cudatoolkit=11 cudnn=8`
+3. activate the environment
+	- `λ conda activate`
+4. install python 3.10 in the condan environment
+	- `(base) λ conda install python=3.10`
+5. setup the pips packages
+	- `(base) λ pip install -r requirements.txt`
+6. run the gpu-chekc
+	- `(base) λ python gpucheck.py`
+7. train!
+	- `(base) λ python train.py`
 
