@@ -345,4 +345,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b40d18eddf2ff842ade49e247152b97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  model: {fileID: 0}
+  modelAsset: {fileID: 5022602860645237092, guid: cb2e2350ca7e2a447a2674dd3e7a0968, type: 3}
