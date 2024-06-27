@@ -74,4 +74,27 @@ pip install tf2onnx
 tf2onnx_env\Scripts\activate
 
 
+...
+
+okay ... tflow is giving up on windows and using WSL2
+
+fine?
+
+i should learn that
+
+https://www.youtube.com/watch?v=0S81koZpwPA
+
+
+...
+
+meanwhile, i got an onnx file out of it.
+
+i have;
+- conda to train the model on the GPU
+- a venv to conver it to onnx
+
+i need;
+- load it into the baracuda stuff
+- ? daapt input and output?
+
 
