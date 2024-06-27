@@ -16,6 +16,10 @@ input_image_w = 1920
 input_image_h = 1080
 input_image_scale = 0.2 # ajust it to 1/5th
 
+# originally was 1024, but, the dataset garbage so whatever
+layer_mid = 8
+
+
 input_image_shape = (
 	int(input_image_w * input_image_scale),
 	int(input_image_h * input_image_scale),
@@ -32,7 +36,7 @@ base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(input_
 # Add custom layers on top of the base model
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dense(1024, activation='relu')(x)
+x = Dense(layer_mid, activation='relu')(x)
 predictions = Dense(2, activation='softmax')(x)  # Assuming binary classification (face/no-face)
 
 model = Model(inputs=base_model.input, outputs=predictions)

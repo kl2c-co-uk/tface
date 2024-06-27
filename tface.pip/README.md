@@ -52,8 +52,15 @@ swtich to a normla venv (maybe?) since we can't share the training containter
 6. check on it in the unity project
 
 
+##status
+i need;
+- perform something real with it
 
 -----
+
+mirror notes? crontab! cd /home/piter/tface.git && git fetch --all && git push  git@github.com:kl2c-co-uk/tface.git --all
+
+...
 
 i think that i need to rework the image dimensions
 
@@ -76,7 +83,23 @@ which i then unpack/cache to a layout that the tensorflow stuff can om nom nom e
 
 (i did this with venv but it seems fine with MiniConda3 as well)
 
-i need;
-- perform something real with it
 
 
+##
+
+Anime Faces (sorry)
+- https://github.com/nagadomi/lbpcascade_animeface
+- http://www.manga109.org/en/download.html
+- http://www.manga109.org/en/download_s.html
+
+https://academictorrents.com/details/535113b8395832f09121bc53ac85d7bc8ef6fa5b
+
+https://github.com/leomaurodesenv/game-datasets?tab=readme-ov-file#dataset
+
+
+
+mirrot
+
+
+
+git@github.com:g-pechorin/tface.git
