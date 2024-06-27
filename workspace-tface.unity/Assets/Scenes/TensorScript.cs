@@ -43,8 +43,38 @@ public class TensorScript : MonoBehaviour
         worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
     }
+
+    public WebcamDisplay webcamDisplay;
     void Update()
     {
+
+
+#if true
+        var webcamTexture = webcamDisplay.webcamTexture;
+        // Check if the webcam has provided new data
+        if (webcamTexture.didUpdateThisFrame)
+        {
+            // Convert the webcam texture to a Tensor
+            Tensor inputTensor = new Tensor(webcamTexture, channels: 3);
+
+            // Execute the model with the input tensor
+            worker.Execute(inputTensor);
+
+            // Retrieve the output tensor (if needed)
+            Tensor outputTensor = worker.PeekOutput();
+
+            var o0 = outputTensor[0, 0, 0, 0];
+            var o1 = outputTensor[0, 0, 0, 1];
+
+            cube1.enabled = !(0 >= ((int)o0));
+            cube2.enabled = !(0 >= ((int)o1));
+
+            // Dispose of the input tensor to free resources
+            inputTensor.Dispose();
+            outputTensor.Dispose();
+        }
+#else
+
         Debug.Assert(1 == runtimeModel.inputs.Count); // i can assume trhis?
 
         var batchSize = runtimeModel.inputs[0].shape[4];
@@ -84,6 +114,7 @@ public class TensorScript : MonoBehaviour
 
         inputTensor.Dispose();
         outputTensor.Dispose();
+#endif
     }
     private void OnDestroy()
     {

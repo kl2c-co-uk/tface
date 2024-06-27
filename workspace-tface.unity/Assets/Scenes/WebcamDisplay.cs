@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class WebcamDisplay : MonoBehaviour
 {
     public RawImage rawImage; // Reference to the UI RawImage component
-    private WebCamTexture webcamTexture;
+    public WebCamTexture webcamTexture { private set; get; }
 
     void Start()
     {
