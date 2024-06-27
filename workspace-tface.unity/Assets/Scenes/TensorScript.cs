@@ -45,6 +45,7 @@ public class TensorScript : MonoBehaviour
     }
 
     public WebcamDisplay webcamDisplay;
+    public RenderTexture inputTesorRenderTexture;
     void Update()
     {
 
@@ -55,7 +56,8 @@ public class TensorScript : MonoBehaviour
         if (webcamTexture.didUpdateThisFrame)
         {
             // Convert the webcam texture to a Tensor
-            Tensor inputTensor = new Tensor(webcamTexture, channels: 3);
+            Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
+            Tensor inputTensor = new Tensor(inputTesorRenderTexture, channels: 3);
 
             // Execute the model with the input tensor
             worker.Execute(inputTensor);
