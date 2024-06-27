@@ -9,7 +9,7 @@ from tensorflow.keras.optimizers import Adam
 from dataset import throw
 
 # ChatGPT said 32, but, that crashed it. 8 also worked, but, those seems faster.
-training_batch_size = 16
+training_batch_size = 8
 training_epochs = 1
 
 input_image_w = 1920
