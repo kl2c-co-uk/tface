@@ -9,15 +9,25 @@ from tensorflow.keras.optimizers import Adam
 from dataset import throw
 
 # ChatGPT said 32, but, that crashed it. 8 also worked, but, those seems faster.
-batch_size = 16
+training_batch_size = 16
+training_epochs = 1
+
+input_image_w = 1920
+input_image_h = 1080
+input_image_scale = 0.2 # ajust it to 1/5th
+
+input_image_shape = (
+	int(input_image_w * input_image_scale),
+	int(input_image_h * input_image_scale),
+)
 
 # Load and preprocess the dataset
 train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
-train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=(224, 224), batch_size=batch_size, subset='training')
-validation_generator = train_datagen.flow_from_directory('target/dataset/validation', target_size=(224, 224), batch_size=batch_size, subset='validation')
+train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=input_image_shape, batch_size=training_batch_size, subset='training')
+validation_generator = train_datagen.flow_from_directory('target/dataset/validation', target_size=input_image_shape, batch_size=training_batch_size, subset='validation')
 
 # Load a pre-trained model
-base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(input_image_shape[0], input_image_shape[1], 3))
 
 # Add custom layers on top of the base model
 x = base_model.output
@@ -31,7 +41,7 @@ model = Model(inputs=base_model.input, outputs=predictions)
 model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
 # Train the model
-model.fit(train_generator, validation_data=validation_generator, epochs=10)
+model.fit(train_generator, validation_data=validation_generator, epochs=training_epochs)
 
 # Save the model
 model.save('target/face_detector.keras')
