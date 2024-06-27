@@ -14,5 +14,6 @@ syntax: glob
 *.unity/*.sln
 *.unity/*.csproj
 *.unity/.vsconfig
+*.unity/**/*.onnx
 
 *.pip/*.venv/*/
