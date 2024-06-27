@@ -28,6 +28,8 @@ public class TensorScript : MonoBehaviour
     private Model runtimeModel;
     private IWorker worker;
 
+    public SpinCube cube1;
+    public SpinCube cube2;
     void Start()
     {
         if (modelAsset == null)
@@ -41,72 +43,80 @@ public class TensorScript : MonoBehaviour
         worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
     }
+
+    public WebcamDisplay webcamDisplay;
+    public RenderTexture inputTesorRenderTexture;
     void Update()
     {
+
+
+#if true
+        var webcamTexture = webcamDisplay.webcamTexture;
+        // Check if the webcam has provided new data
+        if (webcamTexture.didUpdateThisFrame)
         {
+            // Convert the webcam texture to a Tensor
+            Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
+            Tensor inputTensor = new Tensor(inputTesorRenderTexture, channels: 3);
 
-            Debug.Assert(1 == runtimeModel.inputs.Count); // i can assume trhis?
-
-            //// Inspect the model to get input dimensions
-            //Model.Input firstInput = runtimeModel.inputs[0]; // Assuming the model has at least one input
-            //string inputName = firstInput.name;
-            //int[] inputShape = firstInput.shape;
-
-            //Debug.Log($"Input Name: {inputName}");
-            //Debug.Log($"Input Shape: {string.Join(", ", inputShape)}");
-
-
-            //// Inspect the model to get input dimensions
-            //foreach (var input in runtimeModel.inputs)
-            //{
-            //    string inputName = input.name;
-            //    int[] inputShape = input.shape;
-
-            //    Debug.Log($"Input Name: {inputName}");
-            //    Debug.Log($"Input Shape: {string.Join(", ", inputShape)}");
-            //}
-
-
-
-
-
-            var batchSize = runtimeModel.inputs[0].shape[4];
-            var width = runtimeModel.inputs[0].shape[5];
-            var height = runtimeModel.inputs[0].shape[6];
-            var channels = runtimeModel.inputs[0].shape[7];
-
-            Debug.Assert(1 == batchSize);
-
-            // create a tensor
-            Tensor inputTensor = new Tensor(1, height, width, channels);
-
-            // fill it with garbatge
-            //foreach (var c in channels.Range())
-            //    foreach (var w in width.Range())
-            //        foreach (var h in height.Range())
-            //            inputTensor[0, c, w, h] = Random.value;
-
-
-            // Execute the model
+            // Execute the model with the input tensor
             worker.Execute(inputTensor);
 
-            // Get the output
+            // Retrieve the output tensor (if needed)
             Tensor outputTensor = worker.PeekOutput();
-
-            Debug.Log("outputTensor.batch = " + outputTensor.batch);
-            Debug.Log("outputTensor.channels = " + outputTensor.channels);
-            Debug.Log("outputTensor.width = " + outputTensor.width);
-            Debug.Log("outputTensor.height = " + outputTensor.height);
-
 
             var o0 = outputTensor[0, 0, 0, 0];
             var o1 = outputTensor[0, 0, 0, 1];
 
-            Debug.Log("o0 = " + o0 + ", o1 = " + o1);
+            cube1.enabled = !(0 >= ((int)o0));
+            cube2.enabled = !(0 >= ((int)o1));
 
+            // Dispose of the input tensor to free resources
             inputTensor.Dispose();
             outputTensor.Dispose();
         }
+#else
+
+        Debug.Assert(1 == runtimeModel.inputs.Count); // i can assume trhis?
+
+        var batchSize = runtimeModel.inputs[0].shape[4];
+        var width = runtimeModel.inputs[0].shape[5];
+        var height = runtimeModel.inputs[0].shape[6];
+        var channels = runtimeModel.inputs[0].shape[7];
+
+        Debug.Assert(1 == batchSize);
+        Debug.Assert(3 == channels);
+
+        // create a tensor
+        Tensor inputTensor = new Tensor(1, height, width, channels);
+
+        // fill it with garbatge
+        //foreach (var c in channels.Range())
+        //    foreach (var w in width.Range())
+        //        foreach (var h in height.Range())
+        //            inputTensor[0, c, w, h] = Random.value;
+
+
+        // Execute the model
+        worker.Execute(inputTensor);
+
+        // Get the output
+        Tensor outputTensor = worker.PeekOutput();
+
+        //Debug.Log("outputTensor.batch = " + outputTensor.batch);
+        //Debug.Log("outputTensor.channels = " + outputTensor.channels);
+        //Debug.Log("outputTensor.width = " + outputTensor.width);
+        //Debug.Log("outputTensor.height = " + outputTensor.height);
+
+        var o0 = outputTensor[0, 0, 0, 0];
+        var o1 = outputTensor[0, 0, 0, 1];
+
+        cube1.enabled = !(0 >= ((int)o0));
+        cube2.enabled = !(0 >= ((int)o1));
+
+        inputTensor.Dispose();
+        outputTensor.Dispose();
+#endif
     }
     private void OnDestroy()
     {
