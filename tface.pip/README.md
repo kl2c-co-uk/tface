@@ -50,21 +50,14 @@ swtich to a normla venv (maybe?) since we can't share the training containter
 5. covnert it
 	- `(conversion) λ python -m tf2onnx.convert --tflite target/face_detector.tflite --output ../workspace-tface.unity/Assets/Scenes/face_detector.onnx --opset 13`
 6. check on it in the unity project
+	- the `.onnx.meta` file and setting may get dropped as i'm ignoring the `.onnx` file
+	- if the demo shows two spinning cubes you're fine
 
+### Status
 
-##status
-i need;
-- perform something real with it
+- need a WebTexture in the example
 
 -----
-
-mirror notes? crontab! cd /home/piter/tface.git && git fetch --all && git push  git@github.com:kl2c-co-uk/tface.git --all
-
-...
-
-i think that i need to rework the image dimensions
-
-
 
 > this document was written in a sleep deprived kandor - the author does not predict that this project/subproject will last due to the author's inexperience with the subject matter
 
