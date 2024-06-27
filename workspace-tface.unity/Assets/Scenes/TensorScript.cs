@@ -40,7 +40,9 @@ public class TensorScript : MonoBehaviour
         runtimeModel = ModelLoader.Load(modelAsset);
         worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
-
+    }
+    void Update()
+    {
         {
 
             Debug.Assert(1 == runtimeModel.inputs.Count); // i can assume trhis?
@@ -75,47 +77,39 @@ public class TensorScript : MonoBehaviour
 
             Debug.Assert(1 == batchSize);
 
+            // create a tensor
+            Tensor inputTensor = new Tensor(1, height, width, channels);
+
             // fill it with garbatge
-            Tensor inputTensor = new Tensor(1, channels, width, height);
+            //foreach (var c in channels.Range())
+            //    foreach (var w in width.Range())
+            //        foreach (var h in height.Range())
+            //            inputTensor[0, c, w, h] = Random.value;
 
-            foreach (var c in channels.Range())
-                foreach (var w in width.Range())
-                    foreach (var h in height.Range())
-                        inputTensor[0, c, w, h] = Random.value;
-
-
-            // Execute the model
-            worker.Execute(inputTensor);
-
-            if (true) throw new System.Exception("??? - now read from result?");
-
-        }
-
-
-        if (true) throw new System.Exception("??? - prepare proper inputs");
-        {
-            // Example: Prepare input data
-            Tensor inputTensor = new Tensor(1, 32); // Adjust dimensions as needed
-            for (int i = 0; i < 32; i++)
-            {
-                inputTensor[0, i] = 0.0f; // Replace with your input data
-            }
 
             // Execute the model
             worker.Execute(inputTensor);
 
             // Get the output
             Tensor outputTensor = worker.PeekOutput();
-            float outputValue = outputTensor[0]; // Adjust based on output dimensions
 
-            // Use the result
-            Debug.Log("Model prediction: " + outputValue);
+            Debug.Log("outputTensor.batch = " + outputTensor.batch);
+            Debug.Log("outputTensor.channels = " + outputTensor.channels);
+            Debug.Log("outputTensor.width = " + outputTensor.width);
+            Debug.Log("outputTensor.height = " + outputTensor.height);
 
-            // Clean up
+
+            var o0 = outputTensor[0, 0, 0, 0];
+            var o1 = outputTensor[0, 0, 0, 1];
+
+            Debug.Log("o0 = " + o0 + ", o1 = " + o1);
+
             inputTensor.Dispose();
             outputTensor.Dispose();
         }
-
+    }
+    private void OnDestroy()
+    {
         worker?.Dispose();
     }
 }
