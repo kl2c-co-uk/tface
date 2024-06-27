@@ -1,4 +1,77 @@
 
+
+## Setup
+
+### MiniConda
+
+Train with your GPU on Windows!
+
+> this is the difference between over 70 hours and less than 70 minutes of time training
+
+0. install conda
+	- https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+1. create the conda environment with "the things"
+	- `λ conda create -c conda-forge --prefix ./target/tface-train python=3.10 cudatoolkit=11 cudnn=8`
+2. activate that conda environment
+	- `λ conda activate ./target/tface-train`
+5. setup the pips packages
+	- `(tface-train) λ pip install -r requirements-training.txt`
+
+6. run the gpu-check
+	- `(tface-train) λ python gpucheck.py`
+7. train!
+	- `(base) λ python train.py`
+7. freeze it
+	- `(base) λ python freeze.py`
+	- this will create `target/face_detector.tflite`
+
+last three can be done ...
+
+`(tface-train) λ python train.py && python freeze.py && shutdown /s /t 180`
+
+... to work "as one" and shutdown the PC 3 minutes after done.
+
+To abort shutdown, run `shutdown /a` from any shell or console.
+
+### BarraCUDA
+
+
+
+setupswtich to a 
+
+
+
+
+2. setup the outer environment;
+	- `λ conda install -c conda-forge cudatoolkit=11 cudnn=8`
+3. activate the environment
+	- `λ conda activate`
+4. install python 3.10 in the condan environment
+	- `(base) λ conda install python=3.10`
+5. setup the pips packages
+	- `(base) λ pip install -r requirements.txt`
+6. run the gpu-chekc
+	- `(base) λ python gpucheck.py`
+7. train!
+	- `(base) λ python train.py`
+7. freeze it
+	- `(base) λ python freeze.py`
+	- this will create `target/face_detector.tflite`
+
+
+
+
+
+
+
+
+
+
+---------
+
+
+
+
 > this document was written in a sleep deprived kandor - the author does not predict that this project/subproject will last due to the author's inexperience with the subject matter
 
 original chat;
