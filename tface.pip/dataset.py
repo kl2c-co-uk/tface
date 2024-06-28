@@ -29,9 +29,38 @@ def build_dataset():
 		'target/wider.annotations.zip'
 	)
 
+	for img, jpg in zipfile_all('target/wider.training.zip', lambda img: img.endswith('.jpg')):
+		img = img[img.find('images/'):]
+		txt = img[:-3] + 'txt'
+		for _, txt in zipfile_one('target/wider.annotations.zip', lambda dat: dat.endswith(txt)):
+			print('found image and label '+ img )
 
 
 	throw('??? - ')
+
+
+
+def zipfile_one(file, test):
+	found = False
+
+	for item in zipfile_all(file, test):
+		if found:
+			throw('too many entries match')
+		else:
+			yield item
+	if found:
+		throw('no entry matched')
+
+
+
+def zipfile_all(file, test):
+	with zipfile.ZipFile(file, 'r') as file:
+		for info in file.infolist():
+			name = info.filename
+			if test(name):
+				yield (name, file.read(info))
+
+
 
 
 
