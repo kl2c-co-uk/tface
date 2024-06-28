@@ -41,22 +41,27 @@ def build_dataset():
 	archive = 'target/wider.training.zip'
 	group = 'train'
 	for image, faces in wider_faces(labels):
+
 		bound = md5(image)
 		jpg = f'{into}{group}/images/{bound}.jpg'
 		for _, data in zipfile_get(archive, image):
 
-			# TODO; skip images that already exist
+			# skip images/masks that already exist
+			if os.path.isfile(jpg):
+				continue
 
-			# repack image
-			(faces, scaled) = repack_image(faces, data, target_width, target_height)
+			else:				
 
-			# save the repacked image
-			ensure_directory_exists(jpg)
-			scaled.save(jpg)
+				# repack image
+				(faces, scaled) = repack_image(faces, data, target_width, target_height)
 
-			print('TODO; save the faces mask')
+				# save the repacked image
+				ensure_directory_exists(jpg)
+				scaled.save(jpg)
 
-	throw('??? - that seems to be the training images?')
+	throw('TODO; save the face masks')
+
+	throw('??? - to it all for the other image set!')
 
 def wider_faces(labels):
 	# we start with the annotations file (sorry)
@@ -123,64 +128,49 @@ def repack_image(faces, data, target_width, target_height):
 	image = Image.open(BytesIO(data))
 
 	(width, height) = image.size
-	
-	scaled_w = '?setme?'
-	scaled_h = '?setme?'
-	scaled_x = '?setme?'
-	scaled_y = '?setme?'
 
-	print(f'(width, height) = {(width, height)}')
-
-
+	# find the uniform scale factor and compute the w/h
+	scale_factor = min(
+		float(target_width) / width,
+		float(target_height) / height)
+	scaled_w = int(scale_factor * width)
+	scaled_h = int(scale_factor * height)
 
 
-	if width == target_width and height == target_height:
-		throw('no need to scale image!')
-	else:
-		throw('this only works for shrinking - change it')
+	# now set the x/y used to place the image in the final image
+	scaled_offset_x = 0
+	scaled_offset_y = 0
+	if scaled_w < target_width:
+		scaled_offset_x = random.randint(0, target_width - scaled_w)
+	if scaled_h < target_height:
+		scaled_offset_y = random.randint(0, target_height - scaled_h)
 
-	# elif width < height:
+	assert scaled_offset_x >= 0
+	assert scaled_offset_y >= 0
 
-		
-	# 	scaled_h = target_height
-	# 	scaled_y = 0
-
-	# 	# compute the scaled width and x
-	# 	scaled_w = int((width * target_height) / height)
-	# 	scaled_x = random.randint(0, (target_width - scaled_w))
-
-	# 	assert scaled_w < target_width
-
-	# else:
-	# 	scaled_w = target_width
-	# 	scaled_x = 0
-
-	# 	# compute the scaled height and y
-	# 	scaled_h = int((height * target_width) / width)
-	# 	scaled_y = random.randint(0, (target_height - scaled_h))
-
-	# scale the image
-	scaled_image = image.resize((scaled_w, scaled_h), Image.LANCZOS)
-
-	# now overlay image
-	target_image.paste(scaled_image, (scaled_x, scaled_y))
+	# scale the image and overlay image
+	target_image.paste(
+		image.resize((scaled_w, scaled_h), Image.LANCZOS),
+		(scaled_offset_x, scaled_offset_y))
 
 	# now scale faces
+	def scale_face(old_face):
+		(old_x, old_y, old_w, old_h) = old_face
+
+		newx = (old_x * scale_factor) + scaled_offset_x
+		newy = (old_y * scale_factor) + scaled_offset_y
+		neww = (old_w * scale_factor)
+		newh = (old_h * scale_factor)
+
+		return (newx, newy, neww, newh)
 	aspect = float(scaled_w) / width
-	scaled_faces = list(
-		map(
-			lambda face: tuple(
-				map(
-					lambda val: int(float(val) * aspect),
-					face
-				)
-			),
-			faces
-		)
-	)
+	scaled_faces = list(map(scale_face, faces))
 
 	# return what we've got!
 	return (scaled_faces, target_image) 
+
+
+
 
 def download_file(url, save_path):
 
