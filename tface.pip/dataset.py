@@ -11,6 +11,10 @@ import os
 import requests
 import zipfile
 import cv2
+from PIL import Image
+from io import BytesIO
+import hashlib
+
 
 def build_dataset():
 	"""build the dataset
@@ -32,13 +36,23 @@ def build_dataset():
 	)
 
 	# we start with the annotations file (sorry)
-	for image, faces in wider_faces('wider_face_train_bbx_gt.txt'):
-		for _, data in zipfile_get('target/wider.training.zip', lambda img: img.endswith(image)):
+	into = 'target/masked-dataset/'
+	labels = 'wider_face_train_bbx_gt.txt'
+	archive = 'target/wider.training.zip'
+	group = 'train'
+	for image, faces in wider_faces(labels):
+		bound = md5(image)
+		jpg = f'{into}{group}/images/{bound}.jpg'
+		for _, data in zipfile_get(archive, lambda img: img.endswith(image)):
 
 			# repack image
-			(faces, data) = repack_image(faces, data, target_width, target_height)
+			(faces, scaled) = repack_image(faces, data, target_width, target_height)
 
-			throw('save repacked image?')
+			# save the repacked image
+			ensure_directory_exists(jpg)
+			scaled.save(jpg)
+
+			print('TODO; save the faces mask')
 
 	throw('??? - that seems to be the training images?')
 
@@ -64,7 +78,7 @@ def wider_faces(labels):
 			else:
 				while len(faces) < count:
 					x, y, w, h, *_ = text.take().split(' ')
-					faces.append((x, y, w, h))
+					faces.append(tuple(map(int, (x, y, w, h))))
 			
 			# we don't need to mess with them here
 			yield (image, faces)
@@ -80,15 +94,12 @@ def zipfile_get(file, test):
 	if not found:
 		throw('no entry matched')
 
-
-
 def zipfile_all(file, test):
 	with zipfile.ZipFile(file, 'r') as file:
 		for info in file.infolist():
 			name = info.filename
 			if test(name):
 				yield (name, file.read(info))
-
 
 class literator():
 	def __init__(self, list):
@@ -102,10 +113,6 @@ class literator():
 		item = self._list[self._next]
 		self._next += 1
 		return item
-
-from PIL import Image
-from io import BytesIO
-
 
 def repack_image(faces, data, target_width, target_height):
 	import random
@@ -144,19 +151,22 @@ def repack_image(faces, data, target_width, target_height):
 	# now overlay image
 	target_image.paste(scaled_image, (scaled_x, scaled_y))
 
-	throw('??? - now scale faces')
+	# now scale faces
+	aspect = float(scaled_w) / width
+	scaled_faces = list(
+		map(
+			lambda face: tuple(
+				map(
+					lambda val: int(float(val) * aspect),
+					face
+				)
+			),
+			faces
+		)
+	)
 
-
-	throw('??? - pack and return this')
-
-	
-
-
-
-
-
-
-
+	# return what we've got!
+	return (scaled_faces, target_image) 
 
 def download_file(url, save_path):
 
@@ -182,8 +192,6 @@ def download_file(url, save_path):
 	
 	print(f"Downloaded {url} to {save_path}")
 
-import hashlib
-
 def md5(input_string):
     # Encode the string to bytes, then create an MD5 hash object
     md5_hash = hashlib.md5(input_string.encode())
@@ -191,26 +199,11 @@ def md5(input_string):
     # Get the hexadecimal representation of the hash
     return md5_hash.hexdigest()
 
-
-
 def ensure_directory_exists(file_path):
 	directory = os.path.dirname(file_path)
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 	return directory
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ##
 # wider! http://shuoyang1213.me/WIDERFACE/
