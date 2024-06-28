@@ -45,6 +45,8 @@ def build_dataset():
 		jpg = f'{into}{group}/images/{bound}.jpg'
 		for _, data in zipfile_get(archive, image):
 
+			# TODO; skip images that already exist
+
 			# repack image
 			(faces, scaled) = repack_image(faces, data, target_width, target_height)
 
@@ -129,21 +131,33 @@ def repack_image(faces, data, target_width, target_height):
 
 	print(f'(width, height) = {(width, height)}')
 
+
+
+
 	if width == target_width and height == target_height:
 		throw('no need to scale image!')
-	elif width < height:
-
-		# compute the scaled width
-		scaled_w = int((width * target_height) / height)
-		
-		scaled_h = target_height
-		scaled_y = 0
-
-		assert scaled_w < target_width
-
-		scaled_x = random.randint(0, (target_width - scaled_w))
 	else:
-		throw('were wide')
+		throw('this only works for shrinking - change it')
+
+	# elif width < height:
+
+		
+	# 	scaled_h = target_height
+	# 	scaled_y = 0
+
+	# 	# compute the scaled width and x
+	# 	scaled_w = int((width * target_height) / height)
+	# 	scaled_x = random.randint(0, (target_width - scaled_w))
+
+	# 	assert scaled_w < target_width
+
+	# else:
+	# 	scaled_w = target_width
+	# 	scaled_x = 0
+
+	# 	# compute the scaled height and y
+	# 	scaled_h = int((height * target_width) / width)
+	# 	scaled_y = random.randint(0, (target_height - scaled_h))
 
 	# scale the image
 	scaled_image = image.resize((scaled_w, scaled_h), Image.LANCZOS)
