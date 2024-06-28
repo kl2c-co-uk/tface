@@ -4,6 +4,8 @@
 
  """
 
+target_width = 1920
+target_height = 1080
 
 import os
 import requests
@@ -29,18 +31,45 @@ def build_dataset():
 		'target/wider.annotations.zip'
 	)
 
-	for img, jpg in zipfile_all('target/wider.training.zip', lambda img: img.endswith('.jpg')):
-		img = img[img.find('images/'):]
-		txt = img[:-3] + 'txt'
-		for _, txt in zipfile_one('target/wider.annotations.zip', lambda dat: dat.endswith(txt)):
-			print('found image and label '+ img )
+	# we start with the annotations file (sorry)
+	for image, faces in wider_faces('wider_face_train_bbx_gt.txt'):
+		for _, data in zipfile_get('target/wider.training.zip', lambda img: img.endswith(image)):
 
+			# repack image
+			(faces, data) = repack_image(faces, data, target_width, target_height)
 
-	throw('??? - ')
+			throw('save repacked image?')
 
+	throw('??? - that seems to be the training images?')
 
+def wider_faces(labels):
+	# we start with the annotations file (sorry)
+	for _, text in zipfile_get('target/wider.annotations.zip', lambda get: get.endswith(labels)):
+		
+		# turn it into a more conventional iterator
+		text = literator(text.decode('utf-8').splitlines())
 
-def zipfile_one(file, test):
+		# decode each entry
+		while text.more():
+
+			# we NEED to decode each entry from the iterator (even if we don't need to decompress the file)
+			image = text.take()
+			count = int(text.take())
+			faces = []
+			if 0 == count:
+				# for extra weirdness; entries (or The One Entry) with no faces have a line with garbage data
+				blank = text.take().strip()
+				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+					throw('empty entry had a funky line!')
+			else:
+				while len(faces) < count:
+					x, y, w, h, *_ = text.take().split(' ')
+					faces.append((x, y, w, h))
+			
+			# we don't need to mess with them here
+			yield (image, faces)
+
+def zipfile_get(file, test):
 	found = False
 
 	for item in zipfile_all(file, test):
@@ -48,7 +77,7 @@ def zipfile_one(file, test):
 			throw('too many entries match')
 		else:
 			yield item
-	if found:
+	if not found:
 		throw('no entry matched')
 
 
@@ -61,10 +90,81 @@ def zipfile_all(file, test):
 				yield (name, file.read(info))
 
 
+class literator():
+	def __init__(self, list):
+		self._next = 0
+		self._list = list
+	
+	def more(self):
+		return self._next < len(self._list)
+	
+	def take(self):
+		item = self._list[self._next]
+		self._next += 1
+		return item
+
+from PIL import Image
+from io import BytesIO
+
+
+def repack_image(faces, data, target_width, target_height):
+	import random
+	target_image = Image.new('RGB', (target_width, target_height), tuple(random.randint(0, 255) for _ in range(3)))
+
+	image = Image.open(BytesIO(data))
+
+	(width, height) = image.size
+	
+	scaled_w = '?setme?'
+	scaled_h = '?setme?'
+	scaled_x = '?setme?'
+	scaled_y = '?setme?'
+
+	print(f'(width, height) = {(width, height)}')
+
+	if width == target_width and height == target_height:
+		throw('no need to scale image!')
+	elif width < height:
+
+		# compute the scaled width
+		scaled_w = int((width * target_height) / height)
+		
+		scaled_h = target_height
+		scaled_y = 0
+
+		assert scaled_w < target_width
+
+		scaled_x = random.randint(0, (target_width - scaled_w))
+	else:
+		throw('were wide')
+
+	# scale the image
+	scaled_image = image.resize((scaled_w, scaled_h), Image.LANCZOS)
+
+	# now overlay image
+	target_image.paste(scaled_image, (scaled_x, scaled_y))
+
+	throw('??? - now scale faces')
+
+
+	throw('??? - pack and return this')
+
+	
+
+
+
+
+
 
 
 
 def download_file(url, save_path):
+
+	if None == save_path:
+		name = 'target/' + md5(url)
+		download_file(url, name)
+		return name
+
 	
 	ensure_directory_exists(save_path)
 
@@ -82,7 +182,14 @@ def download_file(url, save_path):
 	
 	print(f"Downloaded {url} to {save_path}")
 
+import hashlib
 
+def md5(input_string):
+    # Encode the string to bytes, then create an MD5 hash object
+    md5_hash = hashlib.md5(input_string.encode())
+
+    # Get the hexadecimal representation of the hash
+    return md5_hash.hexdigest()
 
 
 
