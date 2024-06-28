@@ -43,7 +43,7 @@ def build_dataset():
 	for image, faces in wider_faces(labels):
 		bound = md5(image)
 		jpg = f'{into}{group}/images/{bound}.jpg'
-		for _, data in zipfile_get(archive, lambda img: img.endswith(image)):
+		for _, data in zipfile_get(archive, image):
 
 			# repack image
 			(faces, scaled) = repack_image(faces, data, target_width, target_height)
@@ -58,7 +58,7 @@ def build_dataset():
 
 def wider_faces(labels):
 	# we start with the annotations file (sorry)
-	for _, text in zipfile_get('target/wider.annotations.zip', lambda get: get.endswith(labels)):
+	for _, text in zipfile_get('target/wider.annotations.zip', labels):
 		
 		# turn it into a more conventional iterator
 		text = literator(text.decode('utf-8').splitlines())
@@ -83,16 +83,16 @@ def wider_faces(labels):
 			# we don't need to mess with them here
 			yield (image, faces)
 
-def zipfile_get(file, test):
+def zipfile_get(file, name):
 	found = False
-
-	for item in zipfile_all(file, test):
+	for item in zipfile_all(file, lambda a : a.endswith(name)):
 		if found:
-			throw('too many entries match')
+			throw('too many entries match `{name}`')
 		else:
+			found = True
 			yield item
 	if not found:
-		throw('no entry matched')
+		throw(f'no entry matched `{name}`')
 
 def zipfile_all(file, test):
 	with zipfile.ZipFile(file, 'r') as file:
