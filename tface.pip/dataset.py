@@ -1,11 +1,40 @@
+"""
+
+ λ nodemon --ignore target/ dataset.p
+
+ """
+
+
 import os
 import requests
+import zipfile
+import cv2
 
-def ensure_directory_exists(file_path):
-	directory = os.path.dirname(file_path)
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-	return directory
+def build_dataset():
+	"""build the dataset
+
+	build a dataset of many images resized and as heat-maps
+	"""
+
+	download_file(
+		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
+		'target/wider.training.zip'
+	)
+	download_file(
+		'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
+		'target/wider.validation.zip'
+	)
+	download_file(
+		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip',
+		'target/wider.annotations.zip'
+	)
+
+
+
+	throw('??? - ')
+
+
+
 def download_file(url, save_path):
 	
 	ensure_directory_exists(save_path)
@@ -23,6 +52,29 @@ def download_file(url, save_path):
 							f.write(chunk)
 	
 	print(f"Downloaded {url} to {save_path}")
+
+
+
+
+
+def ensure_directory_exists(file_path):
+	directory = os.path.dirname(file_path)
+	if not os.path.exists(directory):
+		os.makedirs(directory)
+	return directory
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##
 # wider! http://shuoyang1213.me/WIDERFACE/
@@ -51,9 +103,6 @@ def safe_write(path):
 	ensure_directory_exists(path)
 	return open(path, 'w')
 
-import zipfile
-import os
-import cv2
 
 def throw(message):
 	print('\n')
@@ -158,21 +207,24 @@ def wider_set(root, images, labels):
 				xml_write(xml, f'</annotation>')
 				xml.close()
 
+if __name__ == "__main__":
+    build_dataset()
+else:
+	throw('do something else?')
 
+	# the validation set
+	wider_set(
+		root = 'target/dataset/validation/',
+		images = 'target/wider.validation.zip',
+		labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
+	)
 
-# the validation set
-wider_set(
-	root = 'target/dataset/validation/',
-	images = 'target/wider.validation.zip',
-	labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
-)
-
-# the training set
-wider_set(
-	root = 'target/dataset/train/',
-	images = 'target/wider.training.zip',
-	labels = 'wider_face_split/wider_face_train_bbx_gt.txt'
-)
+	# the training set
+	wider_set(
+		root = 'target/dataset/train/',
+		images = 'target/wider.training.zip',
+		labels = 'wider_face_split/wider_face_train_bbx_gt.txt'
+	)
 
 
 print("data set loaded - okie dokee")
