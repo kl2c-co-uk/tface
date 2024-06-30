@@ -2,6 +2,18 @@
 sling-tface
 
 
+
+
+
+
+λ git clone --mirror http://big5pi0:3000/peter/tface.git ./
+
+git fetch --all && git push --mirror git@github.com:kl2c-co-uk/tface.git
+
+λ git fetch --all
+
+
+
 cd /home/piter/tface.git && git fetch --all && git push  git@github.com:kl2c-co-uk/tface.git --all
 
 
