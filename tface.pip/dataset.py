@@ -17,6 +17,10 @@ import hashlib
 import math
 
 
+class Bunch:
+	def __init__(self, **kwds):
+		self.__dict__.update(kwds)
+
 def build_dataset():
 	"""build the dataset
 
@@ -61,34 +65,48 @@ def build_dataset():
 		if not os.path.isfile(png):
 			heatmap = Image.new('L', (target_width, target_height))
 
-			# should probably compute bounds for these to speed it up
 
+
+			# should probably compute bounds for these to speed it up
+			def hot_spot(face):
+				fx, fy, fw, fh = face
+
+				half_w = float(fw) / 2.0
+				half_h = float(fh) / 2.0
+
+				return Bunch(
+					off_x = float(fx) + half_w,
+					off_y = float(fy) + half_h,
+					scale_x = 1.0 / half_w,
+					scale_y = 1.0 / half_h,
+				)
+
+			hot_spots = map(hot_spot, faces)
+				
 
 			# find the max heat per pixel
 			for x in range(0, heatmap.size[0]):
+				x = float(x)
 				for y in range(0, heatmap.size[1]):
-					heat = 0
+					y = float(y)
+					heat = 0.0
 
-					for fx,fy,fw,fh in faces:
-						fw = float(fw) / 2
-						fh = float(fh) / 2
+					for spot in hot_spots:
+						pix_x = (x - spot.off_x) * spot.scale_x
+						pix_y = (y - spot.off_y) * spot.scale_y
 
-						fx = (x - (fx + fw)) / fw
-						fy = (y - (fy + fh)) / fh
-						fx = abs(fx)
-						fy = abs(fy)
+						print(str(pix_x))
 
-						
-						fv = 1 - math.sqrt(fx*fx + fy*fy)
+						piz_sq = (pix_x * pix_x) + (pix_y * pix_y)
 
-						# print(f'TODO; compute the heat from this face {fx}, {fy}, {fw} {fh} == {fv}')
-
-						heat = max(fv, heat)
-					
-					heatmap.putpixel((x, y), int(256.0 * heat))
+						if piz_sq <= 1:
+							heat = max(heat, 1.0 - math.sqrt(piz_sq))
+					heatmap.putpixel((int(x),int(y)), int(256.0 * heat))
 
 			#save the heat-map
-			# heatmap.show()
+			heatmap.show()
+			throw(jpg)
+			throw('ohnoes')
 			ensure_directory_exists(png)
 			heatmap.save(png)
 		print(f'done {group} `{image}`')
