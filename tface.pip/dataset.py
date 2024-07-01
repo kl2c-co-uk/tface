@@ -1,6 +1,6 @@
 """
 
- λ nodemon --ignore target/ dataset.p
+ λ nodemon --ignore target/ dataset.py
 
  """
 
@@ -14,6 +14,7 @@ import cv2
 from PIL import Image
 from io import BytesIO
 import hashlib
+import math
 
 
 def build_dataset():
@@ -35,23 +36,20 @@ def build_dataset():
 		'target/wider.annotations.zip'
 	)
 
-	# we start with the annotations file (sorry)
+	# we start with the annotations file
 	into = 'target/masked-dataset/'
 	labels = 'wider_face_train_bbx_gt.txt'
 	archive = 'target/wider.training.zip'
 	group = 'train'
 	for image, faces in wider_faces(labels):
-
-		bound = md5(image)
+		# throw(image)
+		# bound = md5(image)
+		bound = image
 		jpg = f'{into}{group}/images/{bound}.jpg'
-		for _, data in zipfile_get(archive, image):
-
-			# skip images/masks that already exist
-			if os.path.isfile(jpg):
-				continue
-
-			else:				
-
+		
+		# skip images/masks that already exist
+		if not os.path.isfile(jpg):
+			for _, data in zipfile_get(archive, image):
 				# repack image
 				(faces, scaled) = repack_image(faces, data, target_width, target_height)
 
@@ -59,7 +57,42 @@ def build_dataset():
 				ensure_directory_exists(jpg)
 				scaled.save(jpg)
 
-	throw('TODO; save the face masks')
+		png = f'{into}{group}/heatmap/{bound}.png'
+		if not os.path.isfile(png):
+			heatmap = Image.new('L', (target_width, target_height))
+
+			# should probably compute bounds for these to speed it up
+
+
+			# find the max heat per pixel
+			for x in range(0, heatmap.size[0]):
+				for y in range(0, heatmap.size[1]):
+					heat = 0
+
+					for fx,fy,fw,fh in faces:
+						fw = float(fw) / 2
+						fh = float(fh) / 2
+
+						fx = (x - (fx + fw)) / fw
+						fy = (y - (fy + fh)) / fh
+						fx = abs(fx)
+						fy = abs(fy)
+
+						
+						fv = 1 - math.sqrt(fx*fx + fy*fy)
+
+						# print(f'TODO; compute the heat from this face {fx}, {fy}, {fw} {fh} == {fv}')
+
+						heat = max(fv, heat)
+					
+					heatmap.putpixel((x, y), int(256.0 * heat))
+
+			#save the heat-map
+			# heatmap.show()
+			ensure_directory_exists(png)
+			heatmap.save(png)
+		print(f'done {group} `{image}`')
+
 
 	throw('??? - to it all for the other image set!')
 
