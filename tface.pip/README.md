@@ -51,6 +51,7 @@ swtich to a normla venv (maybe?) since we can't share the training containter
 	- `(conversion) λ python -m tf2onnx.convert --tflite target/face_detector.tflite --output ../workspace-tface.unity/Assets/Scenes/face_detector.onnx --opset 13`
 6. check on it in the unity project
 	- the `.onnx.meta` file and setting may get dropped as i'm ignoring the `.onnx` file
+		- ... so ... you *might* have to find the `NULLPOINTER` and drag that asset back over it
 	- if the demo shows two spinning cubes you're fine
 
 ### Status

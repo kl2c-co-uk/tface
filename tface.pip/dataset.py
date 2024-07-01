@@ -49,13 +49,14 @@ def build_dataset():
 		# bound = md5(image)
 		bound = image
 		jpg = f'{into}{group}/images/{bound}.jpg'
-		
-		# skip images/masks that already exist
-		if not os.path.isfile(jpg):
-			for _, data in zipfile_get(archive, image):
-				# repack image
-				(faces, scaled) = repack_image(faces, data, target_width, target_height)
 
+
+		for _, data in zipfile_get(archive, image):
+			# repack image (and the faces)
+			(faces, scaled) = repack_image(faces, data, target_width, target_height)
+
+			# skip images/masks that already exist
+			if not os.path.isfile(jpg):
 				# save the repacked image
 				ensure_directory_exists(jpg)
 				scaled.save(jpg)
@@ -70,7 +71,7 @@ def build_dataset():
 			def hot_spot(face):
 				fx, fy, fw, fh = face
 
-				assert fw > 0
+				assert fw > 0, "bad width in {image}"
 				assert fh > 0
 
 				half_w = float(fw) / 2.0
@@ -138,7 +139,23 @@ def wider_faces(labels):
 			else:
 				while len(faces) < count:
 					x, y, w, h, *_ = text.take().split(' ')
-					faces.append(tuple(map(int, (x, y, w, h))))
+
+					x, y, w, h = tuple(map(int, (x, y, w, h)))
+
+					if h <= 0 or w <= 0:
+						print('found a zero-face in the data for `{image}` and i am skipping it')
+						count -= 1
+					elif int(w * heatmap_scale) <= 0 or int(h * heatmap_scale) <= 0:
+						print('i will smoosh one of the faces in `{image}` so i am skipping it')
+						count -= 1
+					else:
+
+						assert w > 0
+						assert h > 0
+						assert int(w * heatmap_scale) > 0
+						assert int(h * heatmap_scale) > 0
+
+						faces.append((x, y, w, h))
 			
 			# we don't need to mess with them here
 			yield (image, faces)
@@ -233,28 +250,28 @@ def download_file(url, save_path):
 	
 	print(f"Downloaded {url} to {save_path}")
 
-##
-# wider! http://shuoyang1213.me/WIDERFACE/
-# if this doesn't work, visit the website
-download_file(
-	'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
-	'target/wider.training.zip'
-)
+# ##
+# # wider! http://shuoyang1213.me/WIDERFACE/
+# # if this doesn't work, visit the website
+# download_file(
+# 	'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
+# 	'target/wider.training.zip'
+# )
 
-download_file(
-	'https://drive.usercontent.google.com/download?id=1HIfDbVEWKmsYKJZm4lchTBDLW5N7dY5T&export=download&authuser=0&confirm=t&uuid=7afbbdc2-cbaf-4d4a-8998-16296c6d7ccd&at=APZUnTVUADxFyK6lmy5VgFTEYfUy%3A1719227735059',
-	'target/wider.testing.zip'
-)
+# download_file(
+# 	'https://drive.usercontent.google.com/download?id=1HIfDbVEWKmsYKJZm4lchTBDLW5N7dY5T&export=download&authuser=0&confirm=t&uuid=7afbbdc2-cbaf-4d4a-8998-16296c6d7ccd&at=APZUnTVUADxFyK6lmy5VgFTEYfUy%3A1719227735059',
+# 	'target/wider.testing.zip'
+# )
 
-download_file(
-	'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
-	'target/wider.validation.zip'
-)
+# download_file(
+# 	'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
+# 	'target/wider.validation.zip'
+# )
 
-download_file(
-	'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip',
-	'target/wider.annotations.zip'
-)
+# download_file(
+# 	'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip',
+# 	'target/wider.annotations.zip'
+# )
 
 def safe_write(path):
 	ensure_directory_exists(path)
@@ -265,123 +282,123 @@ def throw(message):
 	print('\n')
 	raise Exception(f"{message}\n\n")
 
-def wider_set(root, images, labels):
-	# extract the images
-	with zipfile.ZipFile(images, 'r') as full:
-		for file_info in full.infolist():
-			if file_info.filename.endswith('.jpg'):
-				name = file_info.filename 
-				name = root+name[name.find('images/'):]
-				if not os.path.isfile(name):
-					ensure_directory_exists(name)
-					with open(name, 'wb') as file:
-						file.write(full.read(file_info))
+# def wider_set(root, images, labels):
+# 	# extract the images
+# 	with zipfile.ZipFile(images, 'r') as full:
+# 		for file_info in full.infolist():
+# 			if file_info.filename.endswith('.jpg'):
+# 				name = file_info.filename 
+# 				name = root+name[name.find('images/'):]
+# 				if not os.path.isfile(name):
+# 					ensure_directory_exists(name)
+# 					with open(name, 'wb') as file:
+# 						file.write(full.read(file_info))
 
-	# extract the labels
-	with zipfile.ZipFile('target/wider.annotations.zip', 'r').open(labels) as file_in_zip:
+# 	# extract the labels
+# 	with zipfile.ZipFile('target/wider.annotations.zip', 'r').open(labels) as file_in_zip:
 		
-		##
-		# finky recreation of an iterator
-		data = {
-			'next': 0,
-			'full': file_in_zip.read().decode('utf-8').splitlines(),
-			'more': True
-		}
+# 		##
+# 		# finky recreation of an iterator
+# 		data = {
+# 			'next': 0,
+# 			'full': file_in_zip.read().decode('utf-8').splitlines(),
+# 			'more': True
+# 		}
 		
-		def line(data):
-			item = data['full'][data['next']]
-			data['next'] += 1
-			data['more'] = data['next'] < len(data['full'])
-			return item
-
-		
-		print('')
+# 		def line(data):
+# 			item = data['full'][data['next']]
+# 			data['next'] += 1
+# 			data['more'] = data['next'] < len(data['full'])
+# 			return item
 
 		
-		def xml_write(xml, string):
-			xml.write(string + '\n')
+# 		print('')
 
-		while data['more']:
+		
+# 		def xml_write(xml, string):
+# 			xml.write(string + '\n')
 
-			# read the file name for this entry
-			name = line(data)
-			if not name.endswith('.jpg'):
-				throw(f"the file `{name}` does not end with .jpg(next = {data['next']})")
+# 		while data['more']:
 
-			# print(f'doing {name} annotation ...')
+# 			# read the file name for this entry
+# 			name = line(data)
+# 			if not name.endswith('.jpg'):
+# 				throw(f"the file `{name}` does not end with .jpg(next = {data['next']})")
 
-			# open teh label xml file
-			xml = root+ 'annotations/' +name[:-3] + 'xml'
-			if not os.path.isfile(xml):
-				xml = safe_write(xml)
-			else:
-				xml = False
+# 			# print(f'doing {name} annotation ...')
 
-			# load the count of targets
-			count = int(line(data))
+# 			# open teh label xml file
+# 			xml = root+ 'annotations/' +name[:-3] + 'xml'
+# 			if not os.path.isfile(xml):
+# 				xml = safe_write(xml)
+# 			else:
+# 				xml = False
 
-			if xml:
-				# load the image and find its dimensions
-				image = root+'images/'+name
-				if not os.path.isfile(image):
-					print('\n')
-					throw(f"the file `{image}` does not exist (next = {data['next']})")
-				image = cv2.imread(image)
-				if image is None:
-					throw(f'failed to load {name}')
-				height, width, channels = image.shape
+# 			# load the count of targets
+# 			count = int(line(data))
 
-				# write the header for the record
-				xml_write(xml, f'<annotation>')
-				xml_write(xml, f'\t<filename>{name}</filename>')
-				xml_write(xml, f'\t<size>')
-				xml_write(xml, f'\t\t<width>{width}</width>')
-				xml_write(xml, f'\t\t<height>{height}</height>')
-				xml_write(xml, f'\t</size>')
+# 			if xml:
+# 				# load the image and find its dimensions
+# 				image = root+'images/'+name
+# 				if not os.path.isfile(image):
+# 					print('\n')
+# 					throw(f"the file `{image}` does not exist (next = {data['next']})")
+# 				image = cv2.imread(image)
+# 				if image is None:
+# 					throw(f'failed to load {name}')
+# 				height, width, channels = image.shape
 
-			# wander through each item in the record
-			if 0 == count:
-				blank = line(data).strip()
-				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
-					throw('empty entry had a funky line!')
-			else:
-				for i in range(count):
-					text = line(data).split(' ')
-					x, y, w, h, *_ = text
+# 				# write the header for the record
+# 				xml_write(xml, f'<annotation>')
+# 				xml_write(xml, f'\t<filename>{name}</filename>')
+# 				xml_write(xml, f'\t<size>')
+# 				xml_write(xml, f'\t\t<width>{width}</width>')
+# 				xml_write(xml, f'\t\t<height>{height}</height>')
+# 				xml_write(xml, f'\t</size>')
 
-					if xml:
-						xml_write(xml, f'\t<object>')
-						xml_write(xml, f'\t\t<name>face</name>')
-						xml_write(xml, f'\t\t<bndbox>')
-						xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
-						xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
-						xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
-						xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
-						xml_write(xml, f'\t\t</bndbox>')
-						xml_write(xml, f'\t</object>')
+# 			# wander through each item in the record
+# 			if 0 == count:
+# 				blank = line(data).strip()
+# 				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+# 					throw('empty entry had a funky line!')
+# 			else:
+# 				for i in range(count):
+# 					text = line(data).split(' ')
+# 					x, y, w, h, *_ = text
 
-			if xml:
-				xml_write(xml, f'</annotation>')
-				xml.close()
+# 					if xml:
+# 						xml_write(xml, f'\t<object>')
+# 						xml_write(xml, f'\t\t<name>face</name>')
+# 						xml_write(xml, f'\t\t<bndbox>')
+# 						xml_write(xml, f'\t\t\t<xmin>{x}</xmin>')
+# 						xml_write(xml, f'\t\t\t<ymin>{y}</ymin>')
+# 						xml_write(xml, f'\t\t\t<xmax>{x+w}</xmax>')
+# 						xml_write(xml, f'\t\t\t<ymax>{y+h}</ymax>')
+# 						xml_write(xml, f'\t\t</bndbox>')
+# 						xml_write(xml, f'\t</object>')
+
+# 			if xml:
+# 				xml_write(xml, f'</annotation>')
+# 				xml.close()
 
 if __name__ == "__main__":
     build_dataset()
-else:
-	throw('do something else?')
+# else:
+# 	throw('do something else?')
 
-	# the validation set
-	wider_set(
-		root = 'target/dataset/validation/',
-		images = 'target/wider.validation.zip',
-		labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
-	)
+# 	# the validation set
+# 	wider_set(
+# 		root = 'target/dataset/validation/',
+# 		images = 'target/wider.validation.zip',
+# 		labels = 'wider_face_split/wider_face_val_bbx_gt.txt'
+# 	)
 
-	# the training set
-	wider_set(
-		root = 'target/dataset/train/',
-		images = 'target/wider.training.zip',
-		labels = 'wider_face_split/wider_face_train_bbx_gt.txt'
-	)
+# 	# the training set
+# 	wider_set(
+# 		root = 'target/dataset/train/',
+# 		images = 'target/wider.training.zip',
+# 		labels = 'wider_face_split/wider_face_train_bbx_gt.txt'
+# 	)
 
 
 print("data set loaded - okie dokee")
