@@ -6,6 +6,7 @@
 
 target_width = 1920
 target_height = 1080
+heatmap_scale = 0.2
 
 import os
 import requests
@@ -61,11 +62,16 @@ def build_dataset():
 
 		png = f'{into}{group}/heatmap/{bound}.png'
 		if not os.path.isfile(png):
-			heatmap = Image.new('L', (target_width, target_height))
+			heatmap = Image.new('L', (
+				int(target_width * heatmap_scale),
+				int(target_height * heatmap_scale)))
 
 			# compute the bounds for the hot-spots
 			def hot_spot(face):
 				fx, fy, fw, fh = face
+
+				assert fw > 0
+				assert fh > 0
 
 				half_w = float(fw) / 2.0
 				half_h = float(fh) / 2.0
@@ -84,9 +90,10 @@ def build_dataset():
 			hot_spots = list(map(hot_spot, faces))
 
 			# find the max heat per pixel
-			print(f'heat map {image} with {len(hot_spots)} spots ...')
 			for x in range(0, heatmap.size[0]):
+				x = x / heatmap_scale
 				for y in range(0, heatmap.size[1]):
+					y = y / heatmap_scale
 					heat = 0.0
 
 					for spot in hot_spots:
@@ -99,12 +106,13 @@ def build_dataset():
 
 								if piz_sq <= 1:
 									heat = max(heat, 1.0 - math.sqrt(piz_sq))
-					heatmap.putpixel((x,y), int(256.0 * heat))
+					heatmap.putpixel((
+						int(x*heatmap_scale),int(y*heatmap_scale)), int(256.0 * heat))
 
 			#save the heat-map
 			ensure_directory_exists(png)
 			heatmap.save(png)
-		print(f'preped {image}')
+		print(f'prepared {image}')
 
 	throw('??? - to it all for the other image set!')
 
