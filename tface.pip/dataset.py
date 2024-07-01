@@ -40,7 +40,9 @@ def build_dataset():
 	)
 
 	# do the training dataset
-	wider_dataset(
+	# wider_dataset(
+	import dataset_wider
+	dataset_wider.wider_dataset(
 		target = 'target/masked-dataset/',
 		labels = 'wider_face_train_bbx_gt.txt',
 		archive = 'target/wider.training.zip',
@@ -122,13 +124,15 @@ def wider_dataset(
 			ensure_directory_exists(png)
 			heatmap.save(png)
 
-	batch = []
+	# batch = []
 	for image, faces in wider_faces(labels):
 		bound = image
-		batch.append((image, faces, bound))
+	# 	batch.append((image, faces, bound))
+		import dataset_wider
+		dataset_wider.process_single_item((target, labels, archive, group, image, faces, bound))
 
-	for datum in batch:
-		wider_datum( datum )
+	# for datum in batch:
+	# 	wider_datum( datum )
 	
 
 	
@@ -224,9 +228,7 @@ def repack_image(faces, data, target_width, target_height):
 	return (scaled_faces, target_image) 
 
 if __name__ == "__main__":
-    build_dataset()
-
-
-print("data set loaded - okie dokee")
+	build_dataset()
+	throw("data set loaded - okie dokee")
 
 
