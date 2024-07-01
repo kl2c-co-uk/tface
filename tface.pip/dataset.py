@@ -16,10 +16,8 @@ from io import BytesIO
 import hashlib
 import math
 
+from u import *
 
-class Bunch:
-	def __init__(self, **kwds):
-		self.__dict__.update(kwds)
 
 def build_dataset():
 	"""build the dataset
@@ -65,9 +63,7 @@ def build_dataset():
 		if not os.path.isfile(png):
 			heatmap = Image.new('L', (target_width, target_height))
 
-
-
-			# should probably compute bounds for these to speed it up
+			# compute the bounds for the hot-spots
 			def hot_spot(face):
 				fx, fy, fw, fh = face
 
@@ -79,38 +75,36 @@ def build_dataset():
 					off_y = float(fy) + half_h,
 					scale_x = 1.0 / half_w,
 					scale_y = 1.0 / half_h,
+					edge_l = fx,
+					edge_r = fx + fw,
+					edge_b = fy,
+					edge_t = fy + fh,
 				)
 
-			hot_spots = map(hot_spot, faces)
-				
+			hot_spots = list(map(hot_spot, faces))
 
 			# find the max heat per pixel
+			print(f'heat map {image} with {len(hot_spots)} spots ...')
 			for x in range(0, heatmap.size[0]):
-				x = float(x)
 				for y in range(0, heatmap.size[1]):
-					y = float(y)
 					heat = 0.0
 
 					for spot in hot_spots:
-						pix_x = (x - spot.off_x) * spot.scale_x
-						pix_y = (y - spot.off_y) * spot.scale_y
+						if spot.edge_l <= x and x <= spot.edge_r:
+							if spot.edge_b <= y and y <= spot.edge_t:
+								pix_x = (x - spot.off_x) * spot.scale_x
+								pix_y = (y - spot.off_y) * spot.scale_y
 
-						print(str(pix_x))
+								piz_sq = (pix_x * pix_x) + (pix_y * pix_y)
 
-						piz_sq = (pix_x * pix_x) + (pix_y * pix_y)
-
-						if piz_sq <= 1:
-							heat = max(heat, 1.0 - math.sqrt(piz_sq))
-					heatmap.putpixel((int(x),int(y)), int(256.0 * heat))
+								if piz_sq <= 1:
+									heat = max(heat, 1.0 - math.sqrt(piz_sq))
+					heatmap.putpixel((x,y), int(256.0 * heat))
 
 			#save the heat-map
-			heatmap.show()
-			throw(jpg)
-			throw('ohnoes')
 			ensure_directory_exists(png)
 			heatmap.save(png)
-		print(f'done {group} `{image}`')
-
+		print(f'preped {image}')
 
 	throw('??? - to it all for the other image set!')
 
@@ -158,19 +152,6 @@ def zipfile_all(file, test):
 			name = info.filename
 			if test(name):
 				yield (name, file.read(info))
-
-class literator():
-	def __init__(self, list):
-		self._next = 0
-		self._list = list
-	
-	def more(self):
-		return self._next < len(self._list)
-	
-	def take(self):
-		item = self._list[self._next]
-		self._next += 1
-		return item
 
 def repack_image(faces, data, target_width, target_height):
 	import random
@@ -220,9 +201,6 @@ def repack_image(faces, data, target_width, target_height):
 	# return what we've got!
 	return (scaled_faces, target_image) 
 
-
-
-
 def download_file(url, save_path):
 
 	if None == save_path:
@@ -246,19 +224,6 @@ def download_file(url, save_path):
 							f.write(chunk)
 	
 	print(f"Downloaded {url} to {save_path}")
-
-def md5(input_string):
-    # Encode the string to bytes, then create an MD5 hash object
-    md5_hash = hashlib.md5(input_string.encode())
-
-    # Get the hexadecimal representation of the hash
-    return md5_hash.hexdigest()
-
-def ensure_directory_exists(file_path):
-	directory = os.path.dirname(file_path)
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-	return directory
 
 ##
 # wider! http://shuoyang1213.me/WIDERFACE/
