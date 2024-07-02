@@ -74,16 +74,145 @@ def forked(args):
 	
 	cache, out, images, datapoint = args
 	
+	bound = datapoint.jpeg_path
+	jpg = f'{out}/images/{bound}.jpg'
+	png = f'{out}/heatmap/{bound}.png'
+	faces = datapoint.faces
+
+	def reFace(faces, factor):
+
+		offsets = (0, 0)
+		scale = 1.0
+
+		if type(offsets) == type(factor):
+			x, y = factor
+			offsets = (x, y)
+		elif type(scale) == type(factor):
+			scale = factor
+		else:
+			throw(' whats? ' + type(factor))
+
+		offx, offy = offsets
+
+		result = []
+		for face in faces:
+			result.append(
+				Bunch(
+					w = int(face.w * scale),
+					h = int(face.h * scale),
+					x = int(face.x* scale) + offx,
+					y = int(face.y * scale) + offy,
+				)
+			)
+
+		return result
+
 	# TODO; skip old ones
 	print(datapoint.jpeg_path)
 	print(datapoint.jpeg_path)
 	print(datapoint.jpeg_path)
 
-	raise('locate the original image')
-	raise('resize the original image')
-	raise('save the resized image to disk')
+	###
+	# load the original image
 
-	raise('build a heat-map')
+	the_image = None
+	for data in ZipWalk(images).read(datapoint.jpeg_path):
+		from PIL import Image
+		from io import BytesIO
+		assert None == the_image
+		the_image = Image.open(BytesIO(data))
+		assert None != the_image
 	
+	assert None != the_image
+
+	###
+	# resize the the_image image and faces
+
+	# shrink width
+	if the_image.size[0] > cache.size[0]:
+		throw ('??? shrink width')
 	
-	raise('>??>? '+str(args))
+	# shrink height
+	if the_image.size[1] > cache.size[1]:
+		factor = float(cache.size[1]) / float(the_image.size[1])
+
+		nw = int(the_image.size[0] * factor)
+		nh = int(the_image.size[1] * factor)
+
+		the_image = the_image.resize((nw, nh))
+
+		faces = reFace(faces, factor)
+
+	###
+	# composite the face
+
+	# see how far we'll wiggle it - offset the faces
+	import random
+	bump = (random.randint(0, cache.size[0] - the_image.size[0]), random.randint(0, cache.size[1] - the_image.size[1]))
+
+	# Create a new RGB image
+	blank = Image.new('RGB', cache.size, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+
+	# fill ti with random colours
+	print("ddot: random colours")
+	# for x in range(blank.size[0]):
+	# 	for y in range(blank.size[1]):
+	# 		blank.putpixel((x, y), (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+	
+	# make the changes
+	faces = reFace(faces, bump)
+	blank.paste(the_image, bump)
+	the_image = None
+	ensure_directory_exists(jpg)
+	blank.save(jpg)
+
+	def enPatch(face):
+		class patch:
+			def __init__(self, face):
+				self.face = face
+
+				self.half_w = float(face.w) / 2.0
+				self.half_h = float(face.h) / 2.0
+
+				self.center_x = face.x + self.half_w
+				self.center_y = face.y + self.half_h
+
+				if 0.0 == self.half_w:
+					throw('??? - ohnoes')
+				else:
+					self.scale_x = 1.0 / self.half_w
+				if 0.0 == self.half_h:
+					throw('??? - ohnoes')
+				else:
+					self.scale_y = 1.0 / self.half_h
+
+
+			def heat(self, x, y):
+				x = (x - self.center_x) * self.scale_x
+				x *= x
+
+				y = (y - self.center_y) * self.scale_y
+				y *= y
+
+				r = x + y
+
+				if r >= 1:
+					return 0
+				else:
+					import math
+					return 1.0 - math.sqrt(r)
+		return patch(face)
+
+	patches = list(map(enPatch, faces))
+
+	# create a new black and white image
+	blank = Image.new('L', (int(cache.size[0] * cache.heat_scale), int(cache.size[1] * cache.heat_scale)), 0)
+	for x in range(blank.size[0]):
+		for y in range(blank.size[1]):
+			heat = 0
+			for patch in patches:
+				heat = max(heat, patch.heat(x / cache.heat_scale, y / cache.heat_scale))
+			blank.putpixel((x, y), int(256.0 * heat))
+	ensure_directory_exists(png)
+	blank.save(png)
+	throw ('that should be ONE')

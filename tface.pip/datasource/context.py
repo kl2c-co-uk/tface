@@ -5,8 +5,10 @@ import requests
 import os
 
 class Cache():
-	def __init__(self, target = 'target/'):
+	def __init__(self, target, size, heat_scale):
 		self.target = target
+		self.size = size
+		self.heat_scale = heat_scale
 
 
 	def download(self, url, name = None):
