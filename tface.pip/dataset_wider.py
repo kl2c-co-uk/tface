@@ -1,9 +1,70 @@
+"""
+the WIDER face dataset
 
+"""
 
 from u import *
 
 from dataset import *
 
+def wider_dataset(
+	target,
+	labels,
+	archive,
+	group
+):
+	batch = []
+	for image, faces in wider_faces(labels):
+		bound = image
+		batch.append((target, labels, archive, group, image, faces, bound))
+
+	throw('ohh kay')
+
+	# for datum in batch:
+	# 	wider_datum( datum )
+
+def wider_faces(labels):
+	# we start with the annotations file (sorry)
+	for _, text in zipfile_get('target/wider.annotations.zip', labels):
+		
+		# turn it into a more conventional iterator
+		text = literator(text.decode('utf-8').splitlines())
+
+		# decode each entry
+		while text.more():
+
+			# we NEED to decode each entry from the iterator (even if we don't need to decompress the file)
+			image = text.take()
+			count = int(text.take())
+			faces = []
+			if 0 == count:
+				# for extra weirdness; entries (or The One Entry) with no faces have a line with garbage data
+				blank = text.take().strip()
+				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+					throw('empty entry had a funky line!')
+			else:
+				while len(faces) < count:
+					x, y, w, h, *_ = text.take().split(' ')
+
+					x, y, w, h = tuple(map(int, (x, y, w, h)))
+
+					if h <= 0 or w <= 0:
+						# print(f'found a zero-face in the data for `{image}` and i am skipping it')
+						count -= 1
+					elif int(w * heatmap_scale) <= 0 or int(h * heatmap_scale) <= 0:
+						# print(f'i will smoosh one of the faces in `{image}` so i am skipping it')
+						count -= 1
+					else:
+
+						assert w > 0
+						assert h > 0
+						assert int(w * heatmap_scale) > 0
+						assert int(h * heatmap_scale) > 0
+
+						faces.append((x, y, w, h))
+			
+			# we don't need to mess with them here
+			yield (image, faces)
 
 def process_single_item(args):
 	target, labels, archive, group, image, faces, bound = args
@@ -71,6 +132,7 @@ def process_single_item(args):
 		#save the heat-map
 		ensure_directory_exists(png)
 		heatmap.save(png)
+
 
 
 
