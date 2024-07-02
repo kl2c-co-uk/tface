@@ -1,7 +1,14 @@
 
+
+import multiprocessing
+
+SMALL_LIMIT = -1
+COUNT_FORKS = multiprocessing.cpu_count() * 4
+FORKIT = True
+RANDOM_FILLER = True
+
 from . import *
 from .base import *
-
 from .context import *
 
 def chomp__datapoint(lines):
@@ -34,41 +41,40 @@ def chomp__datapoint(lines):
 	
 	return Bunch(jpeg_path=jpeg_path, faces=faces)
 
+class FacePatch:
+	def __init__(self, face):
+		self.face = face
 
+		self.half_w = float(face.w) / 2.0
+		self.half_h = float(face.h) / 2.0
 
-SMALL_LIMIT = 3
+		self.center_x = face.x + self.half_w
+		self.center_y = face.y + self.half_h
 
+		if 0.0 == self.half_w:
+			self.scale_x = 1.0 / 0.00004 # IDK; this should be so small it doesn't count
+		else:
+			self.scale_x = 1.0 / self.half_w
 
-def foo(cache, out):
+		if 0.0 == self.half_h:
+			self.scale_y = 1.0 / 0.00004 # IDK; this should be so small it doesn't count
+		else:
+			self.scale_y = 1.0 / self.half_h
 
-	# download the annotations file
-	annotations = cache.download(
-		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
-	)
+	def heat(self, x, y):
+		x = (x - self.center_x) * self.scale_x
+		x *= x
 
-	# scan that for training data
-	datapoints = []
-	for lines in ZipWalk(annotations).text('wider_face_train_bbx_gt.txt'):
-		while lines.more() and (SMALL_LIMIT*2) > len(datapoints):
-			datapoints.append(chomp__datapoint(lines))
+		y = (y - self.center_y) * self.scale_y
+		y *= y
 
-	# download the images
-	images = cache.download(
-		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
-	)
+		r = x + y
 
-	# do the first one ... just to be sage
-	forked(
-		list(map(lambda datapoint: (cache, out+'train/', images, datapoint), datapoints))[0]
-	)
-
-	throw('i ahve done onw')
-
-	import multiprocessing
-	with multiprocessing.Pool(processes=SMALL_LIMIT) as pool:
-		pool.map(forked, list(map(lambda datapoint: (cache, out+'train/', images, datapoint), datapoints)))
-
-	throw('done that fork thing!!!')
+		if r >= 1:
+			return 0
+		else:
+			import math
+			return 1.0 - math.sqrt(r)
 
 def forked(args):
 	
@@ -79,38 +85,10 @@ def forked(args):
 	png = f'{out}/heatmap/{bound}.png'
 	faces = datapoint.faces
 
-	def reFace(faces, factor):
 
-		offsets = (0, 0)
-		scale = 1.0
-
-		if type(offsets) == type(factor):
-			x, y = factor
-			offsets = (x, y)
-		elif type(scale) == type(factor):
-			scale = factor
-		else:
-			throw(' whats? ' + type(factor))
-
-		offx, offy = offsets
-
-		result = []
-		for face in faces:
-			result.append(
-				Bunch(
-					w = int(face.w * scale),
-					h = int(face.h * scale),
-					x = int(face.x* scale) + offx,
-					y = int(face.y * scale) + offy,
-				)
-			)
-
-		return result
-
-	# TODO; skip old ones
-	print(datapoint.jpeg_path)
-	print(datapoint.jpeg_path)
-	print(datapoint.jpeg_path)
+	# skip ones we've already done
+	if os.path.isfile(jpg) and os.path.isfile(png):
+		return
 
 	###
 	# load the original image
@@ -130,7 +108,14 @@ def forked(args):
 
 	# shrink width
 	if the_image.size[0] > cache.size[0]:
-		throw ('??? shrink width')
+		factor = float(cache.size[0]) / float(the_image.size[0])
+
+		nw = int(the_image.size[0] * factor)
+		nh = int(the_image.size[1] * factor)
+
+		the_image = the_image.resize((nw, nh))
+
+		faces = reFace(faces, factor)
 	
 	# shrink height
 	if the_image.size[1] > cache.size[1]:
@@ -144,7 +129,7 @@ def forked(args):
 		faces = reFace(faces, factor)
 
 	###
-	# composite the face
+	# composite the image
 
 	# see how far we'll wiggle it - offset the faces
 	import random
@@ -153,11 +138,11 @@ def forked(args):
 	# Create a new RGB image
 	blank = Image.new('RGB', cache.size, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
 
-	# fill ti with random colours
-	print("ddot: random colours")
-	# for x in range(blank.size[0]):
-	# 	for y in range(blank.size[1]):
-	# 		blank.putpixel((x, y), (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+	# fill it with random colours
+	if RANDOM_FILLER:
+		for x in range(blank.size[0]):
+			for y in range(blank.size[1]):
+				blank.putpixel((x, y), (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
 	
 	# make the changes
 	faces = reFace(faces, bump)
@@ -166,53 +151,91 @@ def forked(args):
 	ensure_directory_exists(jpg)
 	blank.save(jpg)
 
-	def enPatch(face):
-		class patch:
-			def __init__(self, face):
-				self.face = face
+	###
+	# make the heat-map
 
-				self.half_w = float(face.w) / 2.0
-				self.half_h = float(face.h) / 2.0
+	
+	patches = list(map(lambda face: FacePatch(face), faces))
 
-				self.center_x = face.x + self.half_w
-				self.center_y = face.y + self.half_h
-
-				if 0.0 == self.half_w:
-					throw('??? - ohnoes')
-				else:
-					self.scale_x = 1.0 / self.half_w
-				if 0.0 == self.half_h:
-					throw('??? - ohnoes')
-				else:
-					self.scale_y = 1.0 / self.half_h
-
-
-			def heat(self, x, y):
-				x = (x - self.center_x) * self.scale_x
-				x *= x
-
-				y = (y - self.center_y) * self.scale_y
-				y *= y
-
-				r = x + y
-
-				if r >= 1:
-					return 0
-				else:
-					import math
-					return 1.0 - math.sqrt(r)
-		return patch(face)
-
-	patches = list(map(enPatch, faces))
-
-	# create a new black and white image
+	# create a new black and white heatmap image
 	blank = Image.new('L', (int(cache.size[0] * cache.heat_scale), int(cache.size[1] * cache.heat_scale)), 0)
 	for x in range(blank.size[0]):
 		for y in range(blank.size[1]):
 			heat = 0
 			for patch in patches:
 				heat = max(heat, patch.heat(x / cache.heat_scale, y / cache.heat_scale))
-			blank.putpixel((x, y), int(256.0 * heat))
+			heat *= 256.0
+			heat = int(heat)
+			blank.putpixel((x, y), heat)
 	ensure_directory_exists(png)
 	blank.save(png)
-	throw ('that should be ONE')
+
+	print( datapoint.jpeg_path )
+
+def main(cache, out):
+
+	# download the annotations file
+	annotations = cache.download(
+		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
+	)
+
+	def extract(txt,url,out):
+		datapoints = []
+		for lines in ZipWalk(annotations).text(txt):
+			while lines.more() and (((SMALL_LIMIT) > len(datapoints)) or (-1 == SMALL_LIMIT)):
+				datapoints.append(chomp__datapoint(lines))
+
+		# download the images
+		images = cache.download(url)
+		widen = lambda datapoint: (cache, out, images, datapoint)
+		todo = list(map(widen, datapoints))
+		if FORKIT:
+			with multiprocessing.Pool(processes=COUNT_FORKS) as pool:
+				pool.map(forked, todo)
+		else:
+			for item in todo:
+				forked(item)
+
+	# scan that for training data
+	extract(
+		'wider_face_train_bbx_gt.txt',
+		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
+		out+'train/'
+	)
+
+	# extract validation dataset
+	extract(
+		'wider_face_val_bbx_gt.txt',
+		'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
+		out+'validation/'
+	)
+
+def reFace(faces, factor):
+	"""adjusts the faces by either an offset or a scale
+	"""
+
+	offsets = (0, 0)
+	scale = 1.0
+
+	if type(offsets) == type(factor):
+		x, y = factor
+		offsets = (x, y)
+	elif type(scale) == type(factor):
+		scale = factor
+	else:
+		throw(' whats? ' + type(factor))
+
+	offx, offy = offsets
+
+	result = []
+	for face in faces:
+		result.append(
+			Bunch(
+				w = int(face.w * scale),
+				h = int(face.h * scale),
+				x = int(face.x* scale) + offx,
+				y = int(face.y * scale) + offy,
+			)
+		)
+
+	return result
