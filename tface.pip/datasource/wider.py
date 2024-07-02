@@ -39,7 +39,7 @@ def chomp__datapoint(lines):
 SMALL_LIMIT = 3
 
 
-def foo(cache):
+def foo(cache, out):
 
 	# download the annotations file
 	annotations = cache.download(
@@ -57,11 +57,33 @@ def foo(cache):
 		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
 	)
 
+	# do the first one ... just to be sage
+	forked(
+		list(map(lambda datapoint: (cache, out+'train/', images, datapoint), datapoints))[0]
+	)
+
+	throw('i ahve done onw')
+
 	import multiprocessing
 	with multiprocessing.Pool(processes=SMALL_LIMIT) as pool:
-		pool.map(forked, datapoints)
+		pool.map(forked, list(map(lambda datapoint: (cache, out+'train/', images, datapoint), datapoints)))
 
-	throw('do that fork thing')
+	throw('done that fork thing!!!')
 
 def forked(args):
-	throw('>??>? '+str(args))
+	
+	cache, out, images, datapoint = args
+	
+	# TODO; skip old ones
+	print(datapoint.jpeg_path)
+	print(datapoint.jpeg_path)
+	print(datapoint.jpeg_path)
+
+	raise('locate the original image')
+	raise('resize the original image')
+	raise('save the resized image to disk')
+
+	raise('build a heat-map')
+	
+	
+	raise('>??>? '+str(args))
