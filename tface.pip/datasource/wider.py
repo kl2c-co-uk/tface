@@ -1,11 +1,11 @@
 
 
 import multiprocessing
+import numpy
 
 SMALL_LIMIT = -1
-COUNT_FORKS = multiprocessing.cpu_count() * 4
+COUNT_FORKS = multiprocessing.cpu_count() * 2
 FORKIT = True
-RANDOM_FILLER = True
 
 from . import *
 from .base import *
@@ -45,6 +45,12 @@ class FacePatch:
 	def __init__(self, face):
 		self.face = face
 
+		self.bound_l = face.x
+		self.bound_r = face.x + face.w
+
+		self.bound_b = face.y
+		self.bound_t = face.y + face.h
+
 		self.half_w = float(face.w) / 2.0
 		self.half_h = float(face.h) / 2.0
 
@@ -61,7 +67,12 @@ class FacePatch:
 		else:
 			self.scale_y = 1.0 / self.half_h
 
+	def over(self, x, y):
+		return (self.bound_l <= x) and (x <= self.bound_r) and (self.bound_b <= y) and (y <= self.bound_t)
+
 	def heat(self, x, y):
+
+
 		x = (x - self.center_x) * self.scale_x
 		x *= x
 
@@ -131,44 +142,46 @@ def forked(args):
 	###
 	# composite the image
 
-	# see how far we'll wiggle it - offset the faces
+	# see how far we'll wiggle it - and offset the faces
 	import random
 	bump = (random.randint(0, cache.size[0] - the_image.size[0]), random.randint(0, cache.size[1] - the_image.size[1]))
+	faces = reFace(faces, bump)
 
-	# Create a new RGB image
-	blank = Image.new('RGB', cache.size, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
-
-	# fill it with random colours
-	if RANDOM_FILLER:
-		for x in range(blank.size[0]):
-			for y in range(blank.size[1]):
-				blank.putpixel((x, y), (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+	# create the random image with numpy (so much faster - relevant when we have to do this over 12k times)
+	background_image = Image.fromarray(
+		numpy.random.randint(0, 256, (cache.size[1], cache.size[0], 3), dtype=numpy.uint8)
+	)
 	
 	# make the changes
-	faces = reFace(faces, bump)
-	blank.paste(the_image, bump)
-	the_image = None
+	background_image.paste(the_image, bump)
+	the_image = background_image
 	ensure_directory_exists(jpg)
-	blank.save(jpg)
+	the_image.save(jpg)
+
 
 	###
-	# make the heat-map
+	# make a heat map with numpy
 
+	# create the heat_map as all zeroes
+	heat_w = int(cache.size[0]* cache.heat_scale)
+	heat_h = int(cache.size[1] * cache.heat_scale)
+	heat_map = numpy.zeros(
+		# w/h are flipped because math is hard
+		(heat_h, heat_w),
+		dtype=numpy.uint8)
 	
-	patches = list(map(lambda face: FacePatch(face), faces))
+	# re-scale the faces (once more) and fill them in
+	patches = list(map(lambda face: FacePatch(face), reFace(faces, cache.heat_scale)))
 
-	# create a new black and white heatmap image
-	blank = Image.new('L', (int(cache.size[0] * cache.heat_scale), int(cache.size[1] * cache.heat_scale)), 0)
-	for x in range(blank.size[0]):
-		for y in range(blank.size[1]):
-			heat = 0
-			for patch in patches:
-				heat = max(heat, patch.heat(x / cache.heat_scale, y / cache.heat_scale))
-			heat *= 256.0
-			heat = int(heat)
-			blank.putpixel((x, y), heat)
+	# fill it in
+	for patch in [FacePatch(face) for face in reFace(faces, cache.heat_scale)]:
+		for x in range(patch.bound_l, patch.bound_r):
+			for y in range(patch.bound_b, patch.bound_t):
+				heat = int(patch.heat(x,y) * 256.0)
+				heat_map[y, x] = max(heat_map[y, x], heat)
+
 	ensure_directory_exists(png)
-	blank.save(png)
+	Image.fromarray(heat_map).save(png)
 
 	print( datapoint.jpeg_path )
 
