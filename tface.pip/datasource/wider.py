@@ -5,41 +5,11 @@ import numpy
 
 SMALL_LIMIT = -1
 COUNT_FORKS = multiprocessing.cpu_count() * 2
-FORKIT = True
+FORKIT = False
 
 from . import *
 from .base import *
 from .context import *
-
-def chomp__datapoint(lines):
-	jpeg_path = lines.take()
-	face_count = int(lines.take())
-
-	# read entries
-	faces = []
-	if 0 == face_count:
-		# for extra weirdness; entries (or The One Entry) with no faces have a line with garbage data
-		blank = lines.take().strip()
-		if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
-			throw('empty entry had a funky line!')
-	else:
-		while len(faces) < face_count:
-			x, y, w, h, *_ = lines.take().split(' ')
-
-			x, y, w, h = tuple(map(int, (x, y, w, h)))
-
-			if h <= 0 or w <= 0:
-				# print(f'found a zero-face in the data for `{image}` and i am skipping it')
-				face_count -= 1
-			else:
-
-				assert w > 0
-				assert h > 0
-
-				faces.append(Bunch(x=x, y=y, w=w, h=h))
-	assert 0<= face_count
-	
-	return Bunch(jpeg_path=jpeg_path, faces=faces)
 
 class FacePatch:
 	def __init__(self, face):
@@ -86,6 +56,36 @@ class FacePatch:
 		else:
 			import math
 			return 1.0 - math.sqrt(r)
+
+def chomp__datapoint(lines):
+	jpeg_path = lines.take()
+	face_count = int(lines.take())
+
+	# read entries
+	faces = []
+	if 0 == face_count:
+		# for extra weirdness; entries (or The One Entry) with no faces have a line with garbage data
+		blank = lines.take().strip()
+		if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+			throw('empty entry had a funky line!')
+	else:
+		while len(faces) < face_count:
+			x, y, w, h, *_ = lines.take().split(' ')
+
+			x, y, w, h = tuple(map(int, (x, y, w, h)))
+
+			if h <= 0 or w <= 0:
+				# print(f'found a zero-face in the data for `{image}` and i am skipping it')
+				face_count -= 1
+			else:
+
+				assert w > 0
+				assert h > 0
+
+				faces.append(Bunch(x=x, y=y, w=w, h=h))
+	assert 0<= face_count
+	
+	return Bunch(jpeg_path=jpeg_path, faces=faces)
 
 def forked(args):
 	

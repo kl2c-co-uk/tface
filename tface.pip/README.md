@@ -1,5 +1,10 @@
 
 
+> 2024-07-04; this needs to be updated ... sorry
+
+
+conda create -c conda-forge --prefix ./target/tface-train python=3.10 cudatoolkit=11 cudnn=8 && conda activate ./target/tface-train &&  pip install -r requirements-training.txt
+
 ## Setup
 
 ### MiniConda

@@ -1,3 +1,7 @@
+
+print('2024-07-03; this is old and needs to be replaced with heat-mapped based logic based on image data extracted already')
+
+
 # Import necessary libraries
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator

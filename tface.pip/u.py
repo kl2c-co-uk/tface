@@ -1,4 +1,4 @@
-
+print('2024-07-03; this is old and should probably be removed')
 import os
 import hashlib
 import zipfile
