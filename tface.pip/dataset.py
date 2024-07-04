@@ -11,11 +11,12 @@ target_images = 'target/mega-wipder-data/'
 from datasource.wider import main as wider_main
 from datasource.context import Cache
 
-if __name__ == '__main__':
+def dataset_main():
 	cache = Cache('target/', (target_width,target_height), heatmap_scale)
 	wider_main(cache, target_images)
 
-
+if __name__ == '__main__':
+	dataset_main()
 
 throw('???')
 

@@ -93,7 +93,7 @@ def forked(args):
 	
 	bound = datapoint.jpeg_path
 	jpg = f'{out}/images/{bound}.jpg'
-	png = f'{out}/heatmap/{bound}.png'
+	png = f'{out}/masks/{bound}.png'
 	faces = datapoint.faces
 
 
