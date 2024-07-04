@@ -12,10 +12,7 @@ train_mask_dir			= dataset_norms+  '/train/masks'
 validation_image_dir	= dataset_norms+  '/validation/images'
 validation_mask_dir		= dataset_norms+  '/validation/masks'
 
-
-###
-# build up the ANN
-
+# Import necessary libraries
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import ResNet50
@@ -111,8 +108,8 @@ model = unet_model()
 model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
 # Calculate the steps per epoch
-train_steps = len(os.listdir(train_image_dir + '/class_name')) // batch_size
-validation_steps = len(os.listdir(validation_image_dir + '/class_name')) // batch_size
+train_steps = len(os.listdir(train_image_dir)) * batch_size
+validation_steps = len(os.listdir(validation_image_dir)) * batch_size
 
 # Train the model
 model.fit(train_generator, steps_per_epoch=train_steps, validation_data=validation_generator, validation_steps=validation_steps, epochs=10)
