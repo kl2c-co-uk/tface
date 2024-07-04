@@ -1,16 +1,86 @@
 
-print('2024-07-03; this is old and needs to be replaced with heat-mapped based logic based on image data extracted already')
+# Paths to training and validation directories
+from dataset import dataset_main
+dataset_norms =  dataset_main()
+
+print('2024-07-04; stuff beyon here hasnt been tested')
+print(f"dataset_norms = `{dataset_norms}`")
+raise '???'
+
+train_image_dir			= dataset_norms+  '/train/images'
+train_mask_dir			= dataset_norms+  '/train/masks'
+validation_image_dir	= dataset_norms+  '/validation/images'
+validation_mask_dir		= dataset_norms+  '/validation/masks'
 
 
-# Import necessary libraries
+###
+# build up the ANN
+
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, concatenate, Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
+import os
+import numpy as np
 
-from dataset import throw
+# Define the U-Net model
+def unet_model(input_size=(224, 224, 3)):
+    inputs = Input(input_size)
+    
+    # Encoder: Using a pre-trained ResNet50 as the encoder
+    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_size)
+    
+    # Collect encoder outputs for skip connections
+    skip_connections = [base_model.get_layer(name).output for name in [
+        "conv1_relu", "conv2_block3_out", "conv3_block4_out", "conv4_block6_out"
+    ]]
+    encoder_output = base_model.get_layer("conv5_block3_out").output
+
+    # Decoder
+    def decoder_block(input_tensor, skip_tensor, num_filters):
+        x = Conv2DTranspose(num_filters, (2, 2), strides=(2, 2), padding="same")(input_tensor)
+        x = concatenate([x, skip_tensor])
+        x = Conv2D(num_filters, (3, 3), activation="relu", padding="same")(x)
+        x = Conv2D(num_filters, (3, 3), activation="relu", padding="same")(x)
+        return x
+
+    d1 = decoder_block(encoder_output, skip_connections[3], 512)
+    d2 = decoder_block(d1, skip_connections[2], 256)
+    d3 = decoder_block(d2, skip_connections[1], 128)
+    d4 = decoder_block(d3, skip_connections[0], 64)
+    
+    outputs = Conv2D(1, (1, 1), activation="sigmoid")(d4)
+    
+    model = Model(inputs, outputs)
+    return model
+
+# Custom data generator for images and masks
+def image_mask_generator(image_dir, mask_dir, batch_size, target_size):
+    image_datagen = ImageDataGenerator(rescale=1./255)
+    mask_datagen = ImageDataGenerator(rescale=1./255)
+    
+    image_generator = image_datagen.flow_from_directory(
+        image_dir,
+        class_mode=None,
+        color_mode="rgb",
+        target_size=target_size,
+        batch_size=batch_size,
+        seed=1)
+    
+    mask_generator = mask_datagen.flow_from_directory(
+        mask_dir,
+        class_mode=None,
+        color_mode="grayscale",
+        target_size=target_size,
+        batch_size=batch_size,
+        seed=1)
+    
+    while True:
+        img_batch = image_generator.next()
+        mask_batch = mask_generator.next()
+        yield img_batch, mask_batch
 
 
 
@@ -19,46 +89,35 @@ from dataset import throw
 
 
 
-# ChatGPT said 32, but, that crashed it. 8 also worked, but, those seems faster.
-training_batch_size = 8
-training_epochs = 1
-
-input_image_w = 1920
-input_image_h = 1080
-input_image_scale = 0.2 # ajust it to 1/5th
-
-# originally was 1024, but, the dataset garbage so whatever
-layer_mid = 8
 
 
-input_image_shape = (
-	int(input_image_w * input_image_scale),
-	int(input_image_h * input_image_scale),
-)
 
-# Load and preprocess the dataset
-train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
-train_generator = train_datagen.flow_from_directory('target/dataset/train', target_size=input_image_shape, batch_size=training_batch_size, subset='training')
-validation_generator = train_datagen.flow_from_directory('target/dataset/validation', target_size=input_image_shape, batch_size=training_batch_size, subset='validation')
 
-# Load a pre-trained model
-base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(input_image_shape[0], input_image_shape[1], 3))
 
-# Add custom layers on top of the base model
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = Dense(layer_mid, activation='relu')(x)
-predictions = Dense(2, activation='softmax')(x)  # Assuming binary classification (face/no-face)
 
-model = Model(inputs=base_model.input, outputs=predictions)
+
+# Generator parameters
+batch_size = 16
+target_size = (224, 224)
+
+# Create generators
+train_generator = image_mask_generator(train_image_dir, train_mask_dir, batch_size, target_size)
+validation_generator = image_mask_generator(validation_image_dir, validation_mask_dir, batch_size, target_size)
+
+# Define the model
+model = unet_model()
 
 # Compile the model
 model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
+# Calculate the steps per epoch
+train_steps = len(os.listdir(train_image_dir + '/class_name')) // batch_size
+validation_steps = len(os.listdir(validation_image_dir + '/class_name')) // batch_size
+
 # Train the model
-model.fit(train_generator, validation_data=validation_generator, epochs=training_epochs)
+model.fit(train_generator, steps_per_epoch=train_steps, validation_data=validation_generator, validation_steps=validation_steps, epochs=10)
 
 # Save the model
 model.save('target/face_detector.keras')
 
-print('trained you say? okie dokie')
+print('Model trained and saved!')
