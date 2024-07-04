@@ -14,7 +14,6 @@ print('2024-07-04; these settings arent working great ... or at all')
 input_size=(1920, 1080, 3)
 resize_scale = 0.25 # UGGHUU i hate myself for this but yeah
 batch_size = 16
-batch_size = 16
 target_size = (192, 108)  # This is the size of the output heatmap
 epochs=10
 
