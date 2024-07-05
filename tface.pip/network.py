@@ -12,31 +12,36 @@ from tensorflow.keras.optimizers import Adam
 import os
 import numpy as np
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
+import tensorflow as tf
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
+from tensorflow.keras.models import Model
 
 # Define the model for 1920x1080 input and 192x108 output
-def main(input_size):
-	inputs = Input(input_size)
+def face_detector(src_wh, out_wh):
 
-	# resize the first one
+	# Define input shape
+	input_shape = (src_wh[0], src_wh[1], 3)  # Adjust based on resizing
 
-	# peter; is thia bsd?
-	resized = Conv2D(4, 3, activation='relu', padding='same')(inputs)
-	
-	# Example simple CNN architecture
-	conv1 = Conv2D(64, 3, activation='relu', padding='same')(resized)
-	conv2 = Conv2D(64, 3, activation='relu', padding='same')(conv1)
-	pool1 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
-	
-	conv3 = Conv2D(128, 3, activation='relu', padding='same')(pool1)
-	conv4 = Conv2D(128, 3, activation='relu', padding='same')(conv3)
-	pool2 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(conv4)
-	
-	conv5 = Conv2DTranspose(64, 3, strides=(2, 2), activation='relu', padding='same')(pool2)
-	conv6 = Conv2DTranspose(32, 3, strides=(2, 2), activation='relu', padding='same')(conv5)
-	
-	outputs = Conv2D(1, 1, activation='sigmoid', padding='same')(conv6)  # Adjust activation and padding as needed
-	
-	model = Model(inputs=inputs, outputs=outputs)
+	# Load ResNet50 with pretrained weights, exclude the top layers
+	base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
+
+	# Build custom head for heat map prediction
+	x = base_model.output
+	x = UpSampling2D(size=(6, 6))(x)  # Adjust based on desired output size
+	x = Conv2D(out_wh[0], (3, 3), activation='relu', padding='same')(x)
+	x = Conv2D(out_wh[1], (3, 3), activation='relu', padding='same')(x)
+	x = Conv2D(1, (1, 1), activation='sigmoid')(x)  # Assuming single channel heat map
+
+	# Define the model
+	model = Model(inputs=base_model.input, outputs=x)
 	return model
+
+	# # Compile the model
+	# model.compile(optimizer='adam', loss='mse')
+
+	# # Display the model summary
+	# model.summary()
+
 
 
