@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
 
+from tensorflow.keras.layers import Input, Resizing
 
 import dataset
 
@@ -23,6 +24,8 @@ def main():
 
 	# convert it to greyscale
 	model = RGBToGrayscaleLayer()(model)
+
+	model = Resizing(height=224, width=224)(model)
 
 
 	model = Model(inputs=input_image, outputs=model)
