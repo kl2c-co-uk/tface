@@ -1,16 +1,7 @@
-# Paths to training and validation directories
-from dataset import dataset_main
-dataset_norms = dataset_main()
-
-train_image_dir = dataset_norms + '/train/images'
-train_mask_dir = dataset_norms + '/train/masks'
-validation_image_dir = dataset_norms + '/validation/images'
-validation_mask_dir = dataset_norms + '/validation/masks'
 
 
 
-# Create generators using ImageDataGenerator without resizing
-print('2024-07-04; these settings arent working great ... or at all')
+
 
 
 # this is the size of the input image
@@ -38,56 +29,96 @@ import numpy as np
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 
 # Define the model
-import network
-model = network.face_detector(input_size, output_size)
+if True:
+	# Import necessary libraries
+	import tensorflow as tf
+	from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Input
+	from tensorflow.keras.models import Model
+	from tensorflow.keras.optimizers import Adam
+	import os
+	import numpy as np
+	from tensorflow.keras.layers.experimental.preprocessing import Resizing
+	import tensorflow as tf
+	from tensorflow.keras.applications import ResNet50
+	from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
+	from tensorflow.keras.models import Model
 
-# Compile the model
-model.compile(optimizer='adam', loss='mse')
+	src_wh = input_size
+	out_wh = output_size
 
-# Display the model summary
-# model.summary()
+	# Define input shape
+	input_shape = (src_wh[0], src_wh[1], 3)  # Adjust based on resizing
+
+	# Load ResNet50 with pretrained weights, exclude the top layers
+	base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
+
+	# Build custom head for heat map prediction
+	x = base_model.output
+	x = UpSampling2D(size=(6, 6))(x)  # Adjust based on desired output size
+	x = Conv2D(out_wh[0], (3, 3), activation='relu', padding='same')(x)
+	x = Conv2D(out_wh[1], (3, 3), activation='relu', padding='same')(x)
+	x = Conv2D(1, (1, 1), activation='sigmoid')(x)  # Assuming single channel heat map
+
+	model = Model(inputs=base_model.input, outputs=x)
 
 
-# # Compile the model
-# model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
+	# Compile the model
+	model.compile(optimizer='adam', loss='mse')
+	# model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
-train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
-train_generator = train_datagen.flow_from_directory(
-	train_image_dir,
-	target_size=input_size,
-	batch_size=batch_size,
-	class_mode=None,
-	color_mode='rgb',
-	seed=1)
+	# Display the model summary
+	# model.summary()
 
-train_mask_generator = train_datagen.flow_from_directory(
-	train_mask_dir,
-	target_size=output_size,
-	batch_size=batch_size,
-	class_mode=None,
-	color_mode='grayscale',
-	seed=1)
+# Paths to training and validation directories
+if True:
+	from dataset import dataset_main
+	dataset_norms = dataset_main()
+	train_image_dir = dataset_norms + '/train/images'
+	train_mask_dir = dataset_norms + '/train/masks'
+	validation_image_dir = dataset_norms + '/validation/images'
+	validation_mask_dir = dataset_norms + '/validation/masks'
 
-train_combined_generator = zip(train_generator, train_mask_generator)
+	raise Exception(
+		'guess i need a new generator? https://chatgpt.com/c/e2b1d595-f434-4fad-bf80-6aa207d43f8b'
+	)
 
-validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
-validation_generator = validation_datagen.flow_from_directory(
-	validation_image_dir,
-	target_size=input_size,
-	batch_size=batch_size,
-	class_mode=None,
-	seed=1)
+	train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+	train_generator = train_datagen.flow_from_directory(
+		train_image_dir,
+		target_size=input_size,
+		batch_size=batch_size,
+		class_mode=None,
+		color_mode='rgb',
+		seed=1)
 
-validation_mask_generator = validation_datagen.flow_from_directory(
-	validation_mask_dir,
-	target_size=output_size,
-	batch_size=batch_size,
-	class_mode=None,
-	color_mode='grayscale',
-	seed=1)
+	train_mask_generator = train_datagen.flow_from_directory(
+		train_mask_dir,
+		target_size=output_size,
+		batch_size=batch_size,
+		class_mode=None,
+		color_mode='grayscale',
+		seed=1)
 
-validation_combined_generator = zip(validation_generator, validation_mask_generator)
+	train_combined_generator = zip(train_generator, train_mask_generator)
+
+	validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+	validation_generator = validation_datagen.flow_from_directory(
+		validation_image_dir,
+		target_size=input_size,
+		batch_size=batch_size,
+		class_mode=None,
+		seed=1)
+
+	validation_mask_generator = validation_datagen.flow_from_directory(
+		validation_mask_dir,
+		target_size=output_size,
+		batch_size=batch_size,
+		class_mode=None,
+		color_mode='grayscale',
+		seed=1)
+
+	validation_combined_generator = zip(validation_generator, validation_mask_generator)
 
 # Train the model
 model.fit(

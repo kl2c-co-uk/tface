@@ -3,7 +3,7 @@
 import multiprocessing
 import numpy
 
-SMALL_LIMIT = -1
+SMALL_LIMIT = 50
 COUNT_FORKS = multiprocessing.cpu_count() * 2
 FORKIT = False
 
@@ -41,7 +41,6 @@ class FacePatch:
 		return (self.bound_l <= x) and (x <= self.bound_r) and (self.bound_b <= y) and (y <= self.bound_t)
 
 	def heat(self, x, y):
-
 
 		x = (x - self.center_x) * self.scale_x
 		x *= x
@@ -91,7 +90,9 @@ def forked(args):
 	
 	cache, out, images, datapoint = args
 	
-	bound = datapoint.jpeg_path
+	# turnt he name into an md5 to prevent lots of class anme silliness
+	bound = md5(datapoint.jpeg_path)
+
 	jpg = f'{out}/images/{bound}.jpg'
 	png = f'{out}/masks/{bound}.png'
 	faces = datapoint.faces
