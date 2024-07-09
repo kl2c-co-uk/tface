@@ -1,67 +1,70 @@
 import tensorflow as tf
-import tensorflow_hub as hub
+from tensorflow.keras.layers import Layer, Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
 import numpy as np
-import cv2
 import matplotlib.pyplot as plt
+from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
 
-def preprocess_image(image_path):
-	# Load the image
-	img = cv2.imread(image_path)
-	img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-	img = cv2.resize(img, (224, 224))
-	img = np.expand_dims(img, axis=0)
-	img = img / 255.0  # Normalize to [0, 1] range
-	return img
 
-def segment_face(model, image_path):
-	# Preprocess the image
-	img = preprocess_image(image_path)
+import dataset
 
-	# Run the model
-	predictions = model(img)
-	predictions = predictions["semantic_pred"]
+class RGBToGrayscaleLayer(Layer):
+	def __init__(self, **kwargs):
+		super(RGBToGrayscaleLayer, self).__init__(**kwargs)
 
-	# Ensure predictions are not empty
-	if predictions.size == 0:
-		raise ValueError("Model prediction returned an empty result.")
+	def call(self, inputs):
+		r, g, b = inputs[..., 0], inputs[..., 1], inputs[..., 2]
+		gray = 0.299 * r + 0.587 * g + 0.114 * b
+		return tf.expand_dims(gray, axis=-1)
 
-	# Post-process the output
-	mask = predictions[0].numpy()  # Convert TensorFlow tensor to numpy array
-	mask = (mask == 15)  # Assuming class 15 corresponds to 'person' (varies by model)
-
-	# Resize the mask to the original image size
-	original_img = cv2.imread(image_path)
-	original_size = (original_img.shape[1], original_img.shape[0])
-	mask = cv2.resize(mask.astype(np.uint8), original_size)
-
-	return original_img, mask
- 
-def visualize_segmentation(image, mask):
-	plt.figure(figsize=(10, 10))
-	plt.subplot(1, 2, 1)
-	plt.title("Original Image")
-	plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-	plt.axis('off')
-
-	plt.subplot(1, 2, 2)
-	plt.title("Segmented Face")
-	plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-	plt.imshow(mask, alpha=0.5, cmap='jet')
-	plt.axis('off')
-	plt.show()
-
-if '__main__' == __name__:
+if __name__ == '__main__':
 	print('hey dude')
 
-	# Load the pre-trained DeepLabV3 model from TensorFlow Hub
-	MODEL_URL = "https://tfhub.dev/tensorflow/deeplabv3/1/deeplabv3_mnv2_pascal_train_aug/1"
-	MODEL_URL = 'https://www.kaggle.com/models/tensorflow/deeplab/tfjs/pascal/1/model.json?tfjs-format=file'
-	model = hub.load(MODEL_URL)
+	input_shape = (1080, 1920, 3)
+
+	input_image = Input(shape=input_shape)
+	model = input_image
+	model = RGBToGrayscaleLayer()(model)
+
+	# Conv2D(filters=1, kernel_size=(1, 1), strides=(1, 1), padding='same', activation=None)
 
 
 
-	# Example usage
-	image_path = 'path_to_your_image.jpg'
-	image_path = 'target/square.jpg'
-	image, mask = segment_face(model, image_path)
-	visualize_segmentation(image, mask)
+
+	model = Model(inputs=input_image, outputs=model)
+
+	model.summary()
+
+	image_path, _, _, _ = dataset.contents()
+
+	image_path += '/de776619cedb14de4a9b6cf8f7b82265.jpg'
+
+	img = image.load_img(image_path, target_size=(1080, 1920))
+	img_array = image.img_to_array(img)
+
+	# Normalize the image array
+	img_array = img_array / 255.0
+
+	# Expand dimensions to create a batch of size 1
+	img_array = np.expand_dims(img_array, axis=0)
+
+	# Predict grayscale image
+	grayscale_image = model.predict(img_array)
+
+	# Remove the batch dimension and squeeze the grayscale channel
+	grayscale_image = np.squeeze(grayscale_image, axis=0)
+	grayscale_image = np.squeeze(grayscale_image, axis=-1)
+
+	# Display the original and grayscale images
+	plt.figure(figsize=(10, 5))
+
+	plt.subplot(1, 2, 1)
+	plt.title('Original RGB Image')
+	plt.imshow(img_array[0])  # Display the original image
+
+	plt.subplot(1, 2, 2)
+	plt.title('Grayscale Image')
+	plt.imshow(grayscale_image, cmap='gray')  # Display the grayscale image
+
+	plt.show()
