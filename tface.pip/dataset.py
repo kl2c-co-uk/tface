@@ -6,10 +6,11 @@
 from datasource.wider import main as wider_main
 from datasource.context import Cache
 
+target_width = 1920
+target_height = 1080
+heatmap_scale = 0.025
+
 def dataset_main():
-	target_width = 1920
-	target_height = 1080
-	heatmap_scale = 0.025
 	target_root = 'target/'
 	target_images = 'target/mega-wipder-data/'
 
@@ -22,6 +23,16 @@ def dataset_main():
 	print('... datasources available')
 
 	return target_images
+
+def contents():
+	dataset_norms = dataset_main()
+	train_image_dir = dataset_norms + '/train/images'
+	train_mask_dir = dataset_norms + '/train/masks'
+	validation_image_dir = dataset_norms + '/validation/images'
+	validation_mask_dir = dataset_norms + '/validation/masks'
+	return (train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir)
+
+
 
 if __name__ == '__main__':
 	dataset_main()

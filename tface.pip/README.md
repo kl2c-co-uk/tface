@@ -110,6 +110,6 @@ https://github.com/leomaurodesenv/game-datasets?tab=readme-ov-file#dataset
 
 mirrot
 
-
+https://github.com/YuvalNirkin/face_segmentation
 
 git@github.com:g-pechorin/tface.git
