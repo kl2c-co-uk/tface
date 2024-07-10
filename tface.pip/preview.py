@@ -14,44 +14,22 @@ from tensorflow.keras.models import Model
 
 import dataset
 
-def modelmake_model(input_shape):
-	import tensorflow as tf
-	import tensorflow_hub as hub
-	from tensorflow.keras.layers import Input, Lambda
-	from tensorflow.keras.models import Model
-
-	# Load the pre-trained face detection model from TensorFlow Hub
-	face_detector = hub.load("https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2")
-	detector_output = face_detector(images)
-	return detector_output['detection_boxes']
-
-	def detect_faces(images):
-		return face_detector(images)['detection_boxes']
-
-	# Assuming input_shape is defined somewhere before
-	input_image = Input(shape=input_shape)
-
-	# Resize the input image to a desired size, e.g., (224, 224)
-	resized_image = tf.keras.layers.Resizing(height=224, width=224)(input_image)
-
-	# Convert resized image to grayscale
-	grayscale_image = tf.image.rgb_to_grayscale(resized_image)
-
-	# Detect faces in the image
-	
-
-	# Combine grayscale image with face detection boxes for visualization or further processing
-	combined_output = Lambda(lambda x: (x[0], x[1]))([grayscale_image, faces])
-
-	# Define the model
-	model = Model(inputs=input_image, outputs=combined_output)
-
-	# Model summary
-	model.summary()
-	return model
+DEBUG_PRINTS = False
 
 def main():
-	input_shape = (1080, 1920, 3)
+	model = tface_model()
+
+	preview(model)
+
+	raise Exception('now train it and re-preview')
+
+def tface_model():
+	input_width = 1920
+	input_height = 1080
+	heat_width = 192
+	heat_height = 108
+
+	input_shape = (input_height, input_width, 3)
 
 	# ##
 	# # build a model
@@ -61,22 +39,15 @@ def main():
 	# bottom/start of the network is just ... a 1080p RGB image
 	model = input_image
 	
-	print(f'''\n>>>input
+	if DEBUG_PRINTS:print(f'''\n>>>input
 	{model}
 	''')
-
-	# convert it to greyscale
-	# model = tf.image.rgb_to_grayscale(model)
-	# print(f'''>>>	greyscale
-	# {model}
-	# ''')
-
 
 	# resize
 	model = tf.keras.layers.Resizing(height=224, width=224)(model)
 
 
-	print(f'''\n>>>resized
+	if DEBUG_PRINTS:print(f'''\n>>>resized
 	{model}
 	''')
 
@@ -94,33 +65,55 @@ def main():
 		# do the detection
 		images = face_detector(images)
 		images = images['detection_boxes']
+
 		return images
 	model = Lambda(lamdba)(model)
 
 
-	print(f'''\n>>>face_detector
+	if DEBUG_PRINTS:print(f'''\n>>>face_detector
 	{model}
 	''')
 
 
-	raise Exception(
-		'so i think we now have 1x100x4 tensor with the deteacted faces in some form coming out of it'
-	)
+	##
+	#
 
 
+	# gpt says; Assume detection_boxes has shape [num_detections, 4]
+	# pal says; ... WtH?
+	num_detections = tf.shape(model)[0]
 
+	if DEBUG_PRINTS:print('got one thing')
+
+	# set our dense layer thing
+
+	model = tf.keras.layers.Flatten()(model)
+
+	if DEBUG_PRINTS:print('did i flatten?')
+
+	model = tf.keras.layers.Dense(heat_height * heat_width, activation='relu')(model)
+
+	if DEBUG_PRINTS:print('did i dense?')
+	
+	model = tf.keras.layers.Reshape((heat_height, heat_width, 1))(model)
+
+	if DEBUG_PRINTS:print('reshaped!')
+
+
+	##
+	# hekkit; just do ... dense layers?
+
+	##
+	# build it into a model
 	model = Model(inputs=input_image, outputs=model)
-
-
-	# raise '???'
 
 	##
 	# show some junk about the model
-	model.summary()
+	if DEBUG_PRINTS:model.summary()
 
+	return model
 
-
-
+def preview(model):
 
 	##
 	# run an image (of emma watson?) through the model
@@ -139,6 +132,11 @@ def main():
 	# Predict grayscale image
 	grayscale_image = model.predict(img)
 
+	if DEBUG_PRINTS:print("=="*10)
+
+	if DEBUG_PRINTS:print(grayscale_image)
+
+
 	# Remove the batch dimension and squeeze the grayscale channel
 	grayscale_image = np.squeeze(grayscale_image, axis=0)
 	grayscale_image = np.squeeze(grayscale_image, axis=-1)
@@ -147,23 +145,22 @@ def main():
 	img = img[0]
 
 	# check that it's what we expect
-	# print(
-	# 	f"""=====
+	if DEBUG_PRINTS:print(
+		f"""=====
 
-	# 	len(img) = {len(img)}
-	# 	len(img[0]) = {len(img[0])}
-	# 	len(img[0][0]) = ({len(img[0][0])})
-	# 	type(img[0][0]) = ({type(img[0][0])})
+		len(img) = {len(img)}
+		len(img[0]) = {len(img[0])}
+		len(img[0][0]) = ({len(img[0][0])})
+		type(img[0][0]) = ({type(img[0][0])})
 
-	# 	len(grayscale_image) = {len(grayscale_image)}
-	# 	len(grayscale_image[0]) = {len(grayscale_image[0])}
-	# 	len(grayscale_image[0][0]) =(No!)
-	# 	type(grayscale_image[0][0]) ={type(grayscale_image[0][0])}
+		len(grayscale_image) = {len(grayscale_image)}
+		len(grayscale_image[0]) = {len(grayscale_image[0])}
+		len(grayscale_image[0][0]) =(No!)
+		type(grayscale_image[0][0]) ={type(grayscale_image[0][0])}
 
-	# 	"""
-	# )
+		"""
+	)
 	assert "<class 'numpy.float32'>" ==str(type(grayscale_image[0][0]))
-
 
 	##
 	# show what the thingie has made fromt hat image
