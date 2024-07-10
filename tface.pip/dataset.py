@@ -26,10 +26,11 @@ def dataset_main():
 
 def contents():
 	dataset_norms = dataset_main()
-	train_image_dir = dataset_norms + '/train/images'
-	train_mask_dir = dataset_norms + '/train/masks'
-	validation_image_dir = dataset_norms + '/validation/images'
-	validation_mask_dir = dataset_norms + '/validation/masks'
+	assert dataset_norms.endswith('/')
+	train_image_dir = dataset_norms + 'train/images'
+	train_mask_dir = dataset_norms + 'train/masks'
+	validation_image_dir = dataset_norms + 'validation/images'
+	validation_mask_dir = dataset_norms + 'validation/masks'
 	return (train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir)
 
 

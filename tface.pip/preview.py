@@ -1,27 +1,25 @@
-import tensorflow as tf
-from tensorflow.keras.layers import Layer, Input
-from tensorflow.keras.models import Model
-from tensorflow.keras.preprocessing import image
-import numpy as np
-import matplotlib.pyplot as plt
-from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
-
-from tensorflow.keras.layers import Input, Resizing
-import tensorflow as tf
-import tensorflow_hub as hub
-from tensorflow.keras.layers import Input, Lambda
-from tensorflow.keras.models import Model
-
-import dataset
 
 DEBUG_PRINTS = False
 
 def main():
+
+	training, validate = datasets(batch_size=4)
+
 	model = tface_model()
 
 	preview(model)
 
-	raise Exception('now train it and re-preview')
+	# Compile the model
+	model.compile(optimizer='adam',
+		loss='mean_squared_error',
+		metrics=['accuracy'])
+
+	# Train the model
+	history = model.fit(training,
+			validation_data=validate,
+			epochs=10)  # Adjust the number of epoch
+
+	preview(model)
 
 def tface_model():
 	input_width = 1920
@@ -30,6 +28,21 @@ def tface_model():
 	heat_height = 108
 
 	input_shape = (input_height, input_width, 3)
+
+	import tensorflow as tf
+	from tensorflow.keras.layers import Layer, Input
+	from tensorflow.keras.models import Model
+	from tensorflow.keras.preprocessing import image
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
+
+	from tensorflow.keras.layers import Input, Resizing
+	import tensorflow as tf
+	import tensorflow_hub as hub
+	from tensorflow.keras.layers import Input, Lambda
+	from tensorflow.keras.models import Model
+
 
 	# ##
 	# # build a model
@@ -118,7 +131,24 @@ def preview(model):
 	##
 	# run an image (of emma watson?) through the model
 
-	image_path = dataset.contents()[0] + '/de776619cedb14de4a9b6cf8f7b82265.jpg'
+	from dataset import contents
+	image_path = contents()[0] + '/de776619cedb14de4a9b6cf8f7b82265.jpg'
+
+	import tensorflow as tf
+	from tensorflow.keras.layers import Layer, Input
+	from tensorflow.keras.models import Model
+	from tensorflow.keras.preprocessing import image
+	import numpy as np
+	import matplotlib.pyplot as plt
+	from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
+
+	from tensorflow.keras.layers import Input, Resizing
+	import tensorflow as tf
+	import tensorflow_hub as hub
+	from tensorflow.keras.layers import Input, Lambda
+	from tensorflow.keras.models import Model
+
+
 
 	img = image.load_img(image_path, target_size=(1080, 1920))
 	img = image.img_to_array(img)
@@ -178,7 +208,61 @@ def preview(model):
 
 	plt.show()
 
+def datasets(batch_size):
 
+	# train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir = contents()
+
+	# print(train_image_dir)
+	# print(train_mask_dir)
+
+	# root = dataset_main()
+	root = 'target/mega-wipder-data/'
+
+	import os
+
+	src_width = 1920
+	src_height = 1080
+	out_width = 192
+	out_height = 108
+
+	def mask_set(root):
+		import tensorflow as tf
+		im = 'images/'
+		ma = 'masks/'
+		for s in os.listdir(root + im):
+			assert s.endswith('jpg')
+			o = s[:-3]+'png'
+			assert os.path.isfile(root + ma + o)
+
+		srcs = tf.data.Dataset.list_files(os.path.join(root + im, '*.jpg'))
+		outs = tf.data.Dataset.list_files(os.path.join(root + ma, '*.png'))
+
+		# i really want to doublecheck these - but - ugghhh
+
+		def prep_src(src):
+			src = tf.io.read_file(src)
+			src = tf.image.decode_jpeg(src, channels=3)
+			src = tf.image.resize(src, [src_height, src_width])
+			src = tf.cast(src, tf.float32) / 255.0
+			return src
+
+		def prep_out(out):
+			out = tf.io.read_file(out)
+			out = tf.image.decode_png(out, channels=1)
+			out = tf.image.resize(out, [out_height, out_width])
+			out = tf.cast(out, tf.float32) / 255.0
+			return out
+		
+		dataset = tf.data.Dataset.zip((srcs, outs))
+		dataset = dataset.map(lambda x, y: (prep_src(x), prep_out(y)),num_parallel_calls=tf.data.AUTOTUNE)
+		dataset = dataset.batch(batch_size)
+		dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+		return dataset
+
+	training = mask_set(root + 'train/')
+	validate = mask_set(root + 'validation/')
+
+	return (training, validate)
 
 if __name__ == '__main__':
 	main()
