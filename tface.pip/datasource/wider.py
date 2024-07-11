@@ -9,6 +9,8 @@ from . import *
 from .base import *
 from .context import *
 
+from . import config
+
 print('why are the heat-maps the wrong size?')
 
 class FacePatch:
@@ -119,8 +121,8 @@ def forked(args):
 	# resize the the_image image and faces
 
 	# shrink width
-	if the_image.size[0] > cache.size[0]:
-		factor = float(cache.size[0]) / float(the_image.size[0])
+	if the_image.size[0] > config.target_width:
+		factor = float(config.target_width) / float(the_image.size[0])
 
 		nw = int(the_image.size[0] * factor)
 		nh = int(the_image.size[1] * factor)
@@ -130,8 +132,8 @@ def forked(args):
 		faces = reFace(faces, factor)
 	
 	# shrink height
-	if the_image.size[1] > cache.size[1]:
-		factor = float(cache.size[1]) / float(the_image.size[1])
+	if the_image.size[1] > config.target_height:
+		factor = float(config.target_height) / float(the_image.size[1])
 
 		nw = int(the_image.size[0] * factor)
 		nh = int(the_image.size[1] * factor)
@@ -145,12 +147,12 @@ def forked(args):
 
 	# see how far we'll wiggle it - and offset the faces
 	import random
-	bump = (random.randint(0, cache.size[0] - the_image.size[0]), random.randint(0, cache.size[1] - the_image.size[1]))
+	bump = (random.randint(0, config.target_width - the_image.size[0]), random.randint(0, config.target_height - the_image.size[1]))
 	faces = reFace(faces, bump)
 
 	# create the random image with numpy (so much faster - relevant when we have to do this over 12k times)
 	background_image = Image.fromarray(
-		numpy.random.randint(0, 256, (cache.size[1], cache.size[0], 3), dtype=numpy.uint8)
+		numpy.random.randint(0, 256, (config.target_height, config.target_width, 3), dtype=numpy.uint8)
 	)
 	
 	# make the changes
@@ -159,24 +161,22 @@ def forked(args):
 	ensure_directory_exists(jpg)
 	the_image.save(jpg)
 
-
 	###
 	# make a heat map with numpy
 
 	# create the heat_map as all zeroes
-	
-	heat_w = int(cache.size[0] * cache.heat_scale)
-	heat_h = int(cache.size[1] * cache.heat_scale)
+	heat_w = config.heatmap_width
+	heat_h = config.heatmap_height
 	heat_map = numpy.zeros(
 		# w/h are flipped because math is hard
 		(heat_h, heat_w),
 		dtype=numpy.uint8)
 	
 	# re-scale the faces (once more) and fill them in
-	patches = list(map(lambda face: FacePatch(face), reFace(faces, cache.heat_scale)))
+	patches = list(map(lambda face: FacePatch(face), reFace(faces, config.heatmap_scale)))
 
 	# fill it in
-	for patch in [FacePatch(face) for face in reFace(faces, cache.heat_scale)]:
+	for patch in [FacePatch(face) for face in reFace(faces, config.heatmap_scale)]:
 		for x in range(patch.bound_l, patch.bound_r):
 			for y in range(patch.bound_b, patch.bound_t):
 				heat = int(patch.heat(x,y) * 256.0)
