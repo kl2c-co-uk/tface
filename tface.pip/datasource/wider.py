@@ -3,7 +3,7 @@
 import multiprocessing
 import numpy
 
-SMALL_LIMIT = 2
+from .config import SMALL_LIMIT
 
 from . import *
 from .base import *

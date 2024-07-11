@@ -1,8 +1,9 @@
 
-from .base import *
 import requests
 
-from .hard import sizes
+from .base import *
+from .config import sizes
+
 import os
 
 class Cache():

@@ -1,12 +1,12 @@
 
-EPOCHS = 1
 
 
+from datasource import config
 
 
 def main():
 
-	training, validate = datasets(batch_size=4)
+	training, validate = datasets(config.BATCH_SIZE)
 
 	model = tface_model()
 
@@ -29,15 +29,15 @@ def main():
 	history = model.fit(
 		training,
 		validation_data=validate,
-		epochs=EPOCHS
+		epochs=config.EPOCHS
 	)  # Adjust the number of epoch
 
 	trained = predict(model, raw_image)
 	preview(raw_image, untrained, truth, trained)
 
 def tface_model():
-	from datasource import hard
-	input_width, input_height, heat_width, heat_height = hard.sizes()
+	from datasource import config
+	input_width, input_height, heat_width, heat_height = config.sizes()
 
 	input_shape = (input_height, input_width, 3)
 
@@ -90,10 +90,14 @@ def tface_model():
 
 
 	# Load the ResNet50 model pre-trained on ImageNet, without the top layer
-	resnet_base = tf.keras.applications.ResNet50(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
+	resnet_base = tf.keras.applications.ResNet50(
+		include_top=config.RESNET_TOP,
+		weights='imagenet',
+		input_shape=(224, 224, 3)
+	)
 
 	# Set the base model to be not trainable
-	# resnet_base.trainable = False
+	resnet_base.trainable = config.RESNET_TRAIN
 
 	model = resnet_base(model)
 
@@ -174,15 +178,10 @@ def datasets(batch_size):
 	from dataset import contents
 	train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir = contents()
 
-	# print(train_image_dir)
-	# print(train_mask_dir)
-
-	# root = dataset_main()
 	root = 'target/mega-wipder-data/'
 
 	import os
-	from datasource import hard
-	src_width, src_height, out_width, out_height = hard.sizes()
+	src_width, src_height, out_width, out_height = config.sizes()
 
 	def mask_set(root):
 		import tensorflow as tf
