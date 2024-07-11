@@ -36,8 +36,8 @@ def main():
 	preview(raw_image, untrained, truth, trained)
 
 def tface_model():
-	import dataset
-	input_width, input_height, heat_width, heat_height = dataset.sizes()
+	from datasource import hard
+	input_width, input_height, heat_width, heat_height = hard.sizes()
 
 	input_shape = (input_height, input_width, 3)
 
@@ -180,9 +180,9 @@ def datasets(batch_size):
 	# root = dataset_main()
 	root = 'target/mega-wipder-data/'
 
-	import os, dataset
-
-	src_width, src_height, out_width, out_height = dataset.sizes()
+	import os
+	from datasource import hard
+	src_width, src_height, out_width, out_height = hard.sizes()
 
 	def mask_set(root):
 		import tensorflow as tf

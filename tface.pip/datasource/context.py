@@ -2,13 +2,12 @@
 from .base import *
 import requests
 
+from .hard import sizes
 import os
 
 class Cache():
-	def __init__(self, target, size, heat_scale):
+	def __init__(self, target):
 		self.target = target
-		self.size = size
-		self.heat_scale = heat_scale
 
 
 	def download(self, url, name = None):

@@ -6,23 +6,13 @@
 from datasource.wider import main as wider_main
 from datasource.context import Cache
 
-target_width = 1920
-target_height = 1080
-heatmap_scale = 0.1
 
-def sizes():
-	return (
-		target_width,
-		target_height,
-		int(heatmap_scale * target_width),
-		int(heatmap_scale * target_height)
-	)
 
 def dataset_main():
 	target_root = 'target/'
 	target_images = 'target/mega-wipder-data/'
 
-	cache = Cache('target/', (target_width,target_height), heatmap_scale)
+	cache = Cache('target/')
 	
 	print('loading datasources ...')
 
