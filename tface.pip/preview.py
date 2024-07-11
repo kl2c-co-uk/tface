@@ -36,10 +36,8 @@ def main():
 	preview(raw_image, untrained, truth, trained)
 
 def tface_model():
-	input_width = 1920
-	input_height = 1080
-	heat_width = 192
-	heat_height = 108
+	import dataset
+	input_width, input_height, heat_width, heat_height = dataset.sizes()
 
 	input_shape = (input_height, input_width, 3)
 
@@ -123,8 +121,6 @@ def predict(model, img):
 	from tensorflow.keras.preprocessing import image
 	import numpy as np
 
-
-
 	# Predict grayscale image
 	grayscale_image = model.predict(
 		# Expand dimensions to create a batch of size 1
@@ -184,12 +180,9 @@ def datasets(batch_size):
 	# root = dataset_main()
 	root = 'target/mega-wipder-data/'
 
-	import os
+	import os, dataset
 
-	src_width = 1920
-	src_height = 1080
-	out_width = 192
-	out_height = 108
+	src_width, src_height, out_width, out_height = dataset.sizes()
 
 	def mask_set(root):
 		import tensorflow as tf

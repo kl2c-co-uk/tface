@@ -164,7 +164,8 @@ def forked(args):
 	# make a heat map with numpy
 
 	# create the heat_map as all zeroes
-	heat_w = int(cache.size[0]* cache.heat_scale)
+	
+	heat_w = int(cache.size[0] * cache.heat_scale)
 	heat_h = int(cache.size[1] * cache.heat_scale)
 	heat_map = numpy.zeros(
 		# w/h are flipped because math is hard
