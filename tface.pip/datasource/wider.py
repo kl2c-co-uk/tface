@@ -3,13 +3,13 @@
 import multiprocessing
 import numpy
 
-SMALL_LIMIT = 50
-COUNT_FORKS = multiprocessing.cpu_count() * 2
-FORKIT = False
+SMALL_LIMIT = 2
 
 from . import *
 from .base import *
 from .context import *
+
+print('why are the heat-maps the wrong size?')
 
 class FacePatch:
 	def __init__(self, face):
@@ -196,19 +196,22 @@ def main(cache, out):
 	def extract(txt,url,out):
 		datapoints = []
 		for lines in ZipWalk(annotations).text(txt):
-			while lines.more() and (((SMALL_LIMIT) > len(datapoints)) or (-1 == SMALL_LIMIT)):
+			def is_small():
+				if SMALL_LIMIT > 0:
+					return len(datapoints) < SMALL_LIMIT
+				else:
+					return True
+
+			while lines.more() and is_small():
 				datapoints.append(chomp__datapoint(lines))
 
 		# download the images
 		images = cache.download(url)
 		widen = lambda datapoint: (cache, out, images, datapoint)
 		todo = list(map(widen, datapoints))
-		if FORKIT:
-			with multiprocessing.Pool(processes=COUNT_FORKS) as pool:
-				pool.map(forked, todo)
-		else:
-			for item in todo:
-				forked(item)
+	
+		for item in todo:
+			forked(item)
 
 	# scan that for training data
 	extract(

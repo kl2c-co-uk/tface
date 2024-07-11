@@ -1,5 +1,8 @@
 
-DEBUG_PRINTS = False
+EPOCHS = 1
+
+
+
 
 def main():
 
@@ -7,19 +10,30 @@ def main():
 
 	model = tface_model()
 
-	preview(model)
-
 	# Compile the model
 	model.compile(optimizer='adam',
 		loss='mean_squared_error',
 		metrics=['accuracy'])
 
-	# Train the model
-	history = model.fit(training,
-			validation_data=validate,
-			epochs=10)  # Adjust the number of epoch
+	
+	# Get the image path
+	from dataset import contents
+	image='de776619cedb14de4a9b6cf8f7b82265'
+	raw_image = load_img(contents()[0] + '/' + image + '.jpg')
 
-	preview(model)
+	untrained = predict(model, raw_image)
+	truth =  load_img(contents()[1] + '/' + image + '.png')
+
+
+	# Train the model
+	history = model.fit(
+		training,
+		validation_data=validate,
+		epochs=EPOCHS
+	)  # Adjust the number of epoch
+
+	trained = predict(model, raw_image)
+	preview(raw_image, untrained, truth, trained)
 
 def tface_model():
 	input_width = 1920
@@ -42,6 +56,7 @@ def tface_model():
 	import tensorflow_hub as hub
 	from tensorflow.keras.layers import Input, Lambda
 	from tensorflow.keras.models import Model
+	from tensorflow.keras import layers, models
 
 
 	# ##
@@ -52,65 +67,47 @@ def tface_model():
 	# bottom/start of the network is just ... a 1080p RGB image
 	model = input_image
 	
-	if DEBUG_PRINTS:print(f'''\n>>>input
-	{model}
-	''')
 
 	# resize
 	model = tf.keras.layers.Resizing(height=224, width=224)(model)
 
 
-	if DEBUG_PRINTS:print(f'''\n>>>resized
-	{model}
-	''')
-
-
-
-	# Load the pre-trained face detection model from TensorFlow Hub
-	face_detector = hub.load("https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2")
-	def lamdba(images):
+	# # Load the pre-trained face detection model from TensorFlow Hub
+	# face_detector = hub.load("https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2")
+	# def lamdba(images):
 		
-		# squish into a uint8 layer
-		images = tf.clip_by_value(images, 0, 1)
-		images *= 255.0
-		images = tf.cast(images, tf.uint8)
+	# 	# squish into a uint8 layer
+	# 	images = tf.clip_by_value(images, 0, 1)
+	# 	images *= 255.0
+	# 	images = tf.cast(images, tf.uint8)
 		
-		# do the detection
-		images = face_detector(images)
-		images = images['detection_boxes']
+	# 	# do the detection
+	# 	images = face_detector(images)
+	# 	images = images['detection_boxes']
 
-		return images
-	model = Lambda(lamdba)(model)
-
-
-	if DEBUG_PRINTS:print(f'''\n>>>face_detector
-	{model}
-	''')
+	# 	return images
+	# model = Lambda(lamdba)(model)
 
 
-	##
-	#
 
 
-	# gpt says; Assume detection_boxes has shape [num_detections, 4]
-	# pal says; ... WtH?
-	num_detections = tf.shape(model)[0]
+	# Load the ResNet50 model pre-trained on ImageNet, without the top layer
+	resnet_base = tf.keras.applications.ResNet50(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 
-	if DEBUG_PRINTS:print('got one thing')
+	# Set the base model to be not trainable
+	# resnet_base.trainable = False
 
-	# set our dense layer thing
+	model = resnet_base(model)
+
+	# Add global average pooling layer (because of resnet?)
+	model = layers.GlobalAveragePooling2D()(model)
 
 	model = tf.keras.layers.Flatten()(model)
 
-	if DEBUG_PRINTS:print('did i flatten?')
-
 	model = tf.keras.layers.Dense(heat_height * heat_width, activation='relu')(model)
 
-	if DEBUG_PRINTS:print('did i dense?')
-	
 	model = tf.keras.layers.Reshape((heat_height, heat_width, 1))(model)
 
-	if DEBUG_PRINTS:print('reshaped!')
 
 
 	##
@@ -120,97 +117,66 @@ def tface_model():
 	# build it into a model
 	model = Model(inputs=input_image, outputs=model)
 
-	##
-	# show some junk about the model
-	if DEBUG_PRINTS:model.summary()
-
 	return model
 
-def preview(model):
-
-	##
-	# run an image (of emma watson?) through the model
-
-	from dataset import contents
-	image_path = contents()[0] + '/de776619cedb14de4a9b6cf8f7b82265.jpg'
-
-	import tensorflow as tf
-	from tensorflow.keras.layers import Layer, Input
-	from tensorflow.keras.models import Model
+def predict(model, img):
 	from tensorflow.keras.preprocessing import image
 	import numpy as np
-	import matplotlib.pyplot as plt
-	from tensorflow.keras.layers import Input, Conv2D, UpSampling2D
-
-	from tensorflow.keras.layers import Input, Resizing
-	import tensorflow as tf
-	import tensorflow_hub as hub
-	from tensorflow.keras.layers import Input, Lambda
-	from tensorflow.keras.models import Model
 
 
-
-	img = image.load_img(image_path, target_size=(1080, 1920))
-	img = image.img_to_array(img)
-
-	# Normalize the image array
-	img = img / 255.0
-
-	# Expand dimensions to create a batch of size 1
-	img = np.expand_dims(img, axis=0)
 
 	# Predict grayscale image
-	grayscale_image = model.predict(img)
-
-	if DEBUG_PRINTS:print("=="*10)
-
-	if DEBUG_PRINTS:print(grayscale_image)
-
+	grayscale_image = model.predict(
+		# Expand dimensions to create a batch of size 1
+		np.expand_dims(img, axis=0)
+	)
 
 	# Remove the batch dimension and squeeze the grayscale channel
 	grayscale_image = np.squeeze(grayscale_image, axis=0)
 	grayscale_image = np.squeeze(grayscale_image, axis=-1)
+	
+	return grayscale_image
 
-	# switch the image back to being just one
-	img = img[0]
+def load_img(image_path):
+	from tensorflow.keras.preprocessing import image
+	import numpy as np
 
-	# check that it's what we expect
-	if DEBUG_PRINTS:print(
-		f"""=====
+	# Load and preprocess the image
+	img = image.load_img(image_path)
+	img = image.img_to_array(img) / 255.0  # Normalize the image array
+	
+	return img
 
-		len(img) = {len(img)}
-		len(img[0]) = {len(img[0])}
-		len(img[0][0]) = ({len(img[0][0])})
-		type(img[0][0]) = ({type(img[0][0])})
-
-		len(grayscale_image) = {len(grayscale_image)}
-		len(grayscale_image[0]) = {len(grayscale_image[0])}
-		len(grayscale_image[0][0]) =(No!)
-		type(grayscale_image[0][0]) ={type(grayscale_image[0][0])}
-
-		"""
-	)
-	assert "<class 'numpy.float32'>" ==str(type(grayscale_image[0][0]))
-
-	##
-	# show what the thingie has made fromt hat image
+def preview(img, untrained, truth, trained):
+	import matplotlib.pyplot as plt
 
 	# Display the original and grayscale images
-	plt.figure(figsize=(10, 5))
+	plt.figure(figsize=(15, 10))  # Adjust the figure size as needed
 
-	plt.subplot(1, 2, 1)
+	# First row: Original and Untrained heat map images
+	plt.subplot(2, 2, 1)
 	plt.title('Original RGB Image')
 	plt.imshow(img)  # Display the original image
 
-	plt.subplot(1, 2, 2)
-	plt.title('Grayscale Image')
-	plt.imshow(grayscale_image, cmap='gray')  # Display the grayscale image)  # Display the grayscale image
+	plt.subplot(2, 2, 2)
+	plt.title('Untrained Heat Map')
+	plt.imshow(untrained, cmap='gray')  # Display the untrained heat map image
+
+	# Second row: Truth heat map and Trained heat map images
+	plt.subplot(2, 2, 3)
+	plt.title('Truth Heat Map')
+	plt.imshow(truth, cmap='gray')  # Display the truth heat map image
+
+	plt.subplot(2, 2, 4)
+	plt.title('Trained Heat Map')
+	plt.imshow(trained, cmap='gray')  # Display the trained heat map image
 
 	plt.show()
 
 def datasets(batch_size):
 
-	# train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir = contents()
+	from dataset import contents
+	train_image_dir, train_mask_dir, validation_image_dir, validation_mask_dir = contents()
 
 	# print(train_image_dir)
 	# print(train_mask_dir)
