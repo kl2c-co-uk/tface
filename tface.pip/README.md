@@ -113,3 +113,26 @@ mirrot
 https://github.com/YuvalNirkin/face_segmentation
 
 git@github.com:g-pechorin/tface.git
+
+## 2024-07-12
+
+### Current Issue:
+My approach of directly creating a heatmap is not working as expected. The loss function, designed to minimize prediction errors, is producing all-black images. I think that this happens because every black pixel in both the "true" and "predicted" images boosts the AI's score, leading to a falsely high accuracy when the photos are all black. It's a "race to the bottom" ... how appropriate for AI ...
+
+### Findings:
+When training with only two images, the AI tends to memorize them. While the memorized images look good, new photos would produce the same output. Despite this, the AI still considers this a 98% success due to the large black areas.
+
+### Proposed Solution:
+I should revert to including the counts and coordinates of faces in the model's expected output. To achieve this, I need to:
+- Unpack the data into a usable format (tedious IT work).
+- Integrate the counts and coordinates into the training dataset (TensorFlow-specific work).
+- Extract and match the counts and coordinates from the model during its run (additional TensorFlow-specific work).
+
+### Next Steps:
+- Determine the format in which the counts and coordinates are output by the object detector.
+- Explore adapting these into the heatmap automatically using Deep Learning techniques.
+- Once everything is functioning correctly, I would like to do heatmaps again as they significantly save time, but, I'm not married to the idea.
+
+### Alternative(s)
+- "mutate" the dataset; zoom in on some pictures so that the face occupies the whole frame
+- rewrite the loss scoring function to change emphasis somehow

@@ -168,7 +168,7 @@ def preview(img, untrained, truth, trained):
 	plt.imshow(truth, cmap='gray')  # Display the truth heat map image
 
 	plt.subplot(2, 2, 4)
-	plt.title('Trained Heat Map')
+	plt.title('Predicted Heat Map')
 	plt.imshow(trained, cmap='gray')  # Display the trained heat map image
 
 	plt.show()
