@@ -57,11 +57,12 @@ class DataPoint:
 
 		jpg = f'{self._cache.target}cache/{self._frame._bound}.jpg'
 		png = f'{self._cache.target}cache/{self._frame._bound}.png'
+		jsl = f'{self._cache.target}cache/{self._frame._bound}.jsl'
 
 		# if the input and label exist ...
-		if os.path.isfile(jpg) and  os.path.isfile(png):
+		if os.path.isfile(jpg) and os.path.isfile(png) and os.path.isfile(jsl):
 			# return the image!
-			return (jpg, png)
+			return (jpg, png, jsl)
 
 		# load the image
 		image = self._frame._jpeg.data
@@ -106,6 +107,9 @@ class DataPoint:
 		image = under
 		under = None
 
+		# need to perminise this
+		faces = list(faces)
+
 		# create the bad heat .png
 		bheat = np.zeros(
 			(int(config.target_height * config.heatmap_scale), int(config.target_width * config.heatmap_scale)),
@@ -116,12 +120,28 @@ class DataPoint:
 
 			bheat[y:y+h, x:x+w] = 255
 
-		# store the things
+
+		# store the image(s)
 		from datasource.base import ensure_directory_exists
 		ensure_directory_exists(jpg)
 		ensure_directory_exists(png)
 		cv2.imwrite(jpg, image)
 		cv2.imwrite(png, bheat)
+
+		# create+store the json labels
+		label = []
+		for face in faces:
+			tw = 1.0 / float(config.target_width)
+			th = 1.0 / float(config.target_height)
+			print(face)
+			label.append({
+				x: (face.w * tw),
+				y: (face.w * th),
+				w: (face.w * tw),
+				h: (face.w * th),
+			})	
+		with open(jsl, 'w') as f:
+			json.dump(label, f, indent=1)
 
 		# recur
 		return self.cache

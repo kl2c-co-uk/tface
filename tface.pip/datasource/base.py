@@ -28,56 +28,68 @@ def ensure_directory_exists(file_path):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 	return directory
-				
-class Bunch:
-	def __init__(self, **kwds):
-		self.__dict__.update(kwds)
+		
+import requests
 
-def zipfile_get(file, name):
-	found = False
-	for item in zipfile_all(file, lambda a : a.endswith(name)):
-		if found:
-			throw('too many entries match `{name}`')
-		else:
-			found = True
-			yield item
-	if not found:
-		throw(f'no entry matched `{name}`')
+from .base import *
 
-def zipfile_all(file, test):
-	with zipfile.ZipFile(file, 'r') as file:
-		for info in file.infolist():
-			name = info.filename
-			if test(name):
-				yield (name, file.read(info))
+import os
 
-def download_file(url, save_path):
+class Cache():
+	def __init__(self, target):
+		self.target = target
 
-	if None == save_path:
-		name = 'target/' + md5(url)
-		download_file(url, name)
-		return name
- 	
-	ensure_directory_exists(save_path)
 
-	if os.path.exists(save_path):
+	def download(self, url, name = None):
+		if None == name:
+			name = md5(url)
+		
+		save_path = self.target +name
+		
+		ensure_directory_exists(save_path)
+
+		if os.path.exists(save_path):
 			# print(f"The file '{save_path}' already exists. Skipping download.")
-			return
+			return save_path
 
-	print('this could be loonnngggg .....')
-	
-	response = requests.get(url, stream=True)
-	with open(save_path, 'wb') as f:
-			for chunk in response.iter_content(chunk_size=8192):
-					if chunk:
-							f.write(chunk)
-	
-	print(f"Downloaded {url} to {save_path}")
+		print('downloading to ' + name +' this could be loonnngggg .....')
+		
+		response = requests.get(url, stream=True)
+		with open(save_path, 'wb') as f:
+				for chunk in response.iter_content(chunk_size=8192):
+						if chunk:
+								f.write(chunk)
+		
+		print(f"Downloaded {url} to {save_path}")
+		return save_path
 
-def safe_write(path):
-	ensure_directory_exists(path)
-	return open(path, 'w')
+class ZipWalk():
+	def __init__(self, zip_path):
+		self.zip_path = zip_path
+		assert os.path.isfile(zip_path)
 
-def throw(message):
-	print('\n')
-	raise Exception(f"{message}\n\n")
+	def find(self, test):
+		with zipfile.ZipFile(self.zip_path, 'r') as file:
+			for info in file.infolist():
+				name = info.filename
+				if test(name):
+					yield (name, file.read(info))
+
+	def read(self, name):
+		if not name.startswith('/'):
+			name = '/' + name
+
+		found = False
+		for _, data in self.find(lambda a : a.endswith(name)):
+			if found:
+				raise Exception('too many entries match `{name}`')
+			else:
+				found = True
+				yield data
+		if not found:
+			raise Exception(f'no entry matched `{name}`\n\t... in `{self.zip_path}`\n')
+
+	def text(self, name):
+		for data in self.read(name):
+			# turn it into a more conventional iterator
+			yield literator(data.decode('utf-8').splitlines())
