@@ -1,5 +1,7 @@
 
-
+raise Exception(
+	' this IS the new training program BUT it hasnot been updated since the decoupling'
+)
 
 from datasource import config
 
