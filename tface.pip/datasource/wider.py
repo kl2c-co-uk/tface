@@ -11,6 +11,56 @@ from .context import *
 
 from . import config
 
+
+
+def trainingFrames(cache):
+	# download the annotations file
+	annotations = cache.download(
+		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
+	)
+	
+	for lines in ZipWalk(annotations).text(
+		'wider_face_train_bbx_gt.txt'
+	):
+		while lines.more():
+			jpeg_path = lines.take()
+
+			raise 'create a jampegImage'
+
+			face_count = int(lines.take())
+
+			# read entries
+			faces = []
+			if 0 == face_count:
+				# for extra weirdness; entries (or The One Entry) with no faces have a line with garbage data
+				blank = lines.take().strip()
+				if '0 0 0 0 0 0 0 0 0 0 '.strip() != blank:
+					throw('empty entry had a funky line!')
+			else:
+				while len(faces) < face_count:
+					x, y, w, h, *_ = lines.take().split(' ')
+
+					x, y, w, h = tuple(map(int, (x, y, w, h)))
+
+					if h <= 0 or w <= 0:
+						# print(f'found a zero-face in the data for `{image}` and i am skipping it')
+						face_count -= 1
+					else:
+
+						assert w > 0
+						assert h > 0
+
+						raise 'create a face-patch'
+						faces.append(Bunch(x=x, y=y, w=w, h=h))
+			assert 0<= face_count
+			
+			#datapoints.append(chomp__datapoint(lines))
+
+			raise 'emit a FaceFrame'
+
+
+
+
 class FacePatch:
 	def __init__(self, face):
 		self.face = face
@@ -255,3 +305,6 @@ def reFace(faces, factor):
 		)
 
 	return result
+
+
+

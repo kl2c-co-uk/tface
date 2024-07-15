@@ -3,6 +3,9 @@
 # if you change these you'll have to delete the images and rebuild them ... that will be slow (sorry)
 
 
+
+
+
 from datasource.wider import main as wider_main
 from datasource.context import Cache
 
@@ -34,5 +37,11 @@ def contents():
 
 
 if __name__ == '__main__':
-	dataset_main()
+	cache = Cache('target/')
+
+	import datasource.wider as wider
+
+	wider.trainingFrames(cache)
+
+	raise 'aww yiis'
 
