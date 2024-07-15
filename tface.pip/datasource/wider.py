@@ -11,8 +11,6 @@ from .context import *
 
 from . import config
 
-print('why are the heat-maps the wrong size?')
-
 class FacePatch:
 	def __init__(self, face):
 		self.face = face

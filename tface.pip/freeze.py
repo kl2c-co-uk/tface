@@ -1,4 +1,4 @@
-print('2024-07-03; this is old and should probably be updated')
+print('2024-07-03; this is old but might not need to be updated if the training thing saves data')
 import tensorflow as tf
 
 # touch stuff

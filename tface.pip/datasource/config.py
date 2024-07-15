@@ -6,10 +6,10 @@ heatmap_scale = 0.1
 heatmap_width = int(heatmap_scale * target_width)
 heatmap_height = int(heatmap_scale * target_height)
 
-EPOCHS = 10
+EPOCHS = 2
 BATCH_SIZE = 1
 
-SMALL_LIMIT = 2
+SMALL_LIMIT = 5
 
 RESNET_TRAIN = False
 RESNET_TOP = False
