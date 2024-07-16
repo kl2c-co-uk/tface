@@ -8,14 +8,21 @@ SHRINK = True
 SPLAT = True
 SCALE_HEAT = True
 
+
+import datasource.config as config
+from datasource import val, todo
+
+
 class JPEGImage:
 	def __init__(self, load):
 		self.load = load
 		self._data = None
 	
-	@property
+	@val
 	def data(self):
-		return self.load()
+		image = self.load()
+		image.flags.writeable = False
+		return image
 
 class FacePatch:
 	def __init__(self, jpeg, x, y, w, h):
@@ -32,15 +39,29 @@ class FacePatch:
 			self.x + i, self.y + j,
 			self.w, self.h
 		)
+
 	def scale(self, v):
 		return FacePatch(
 			self.jpeg,
 			int(self.x * v), int(self.y * v),
 			int(self.w * v), int(self.h * v)
 		)
-	@property
+
+	@val
 	def grid(self):
 		return self.w * self.h
+	
+	@val
+	def is_small(self):
+		todo('this should be done in relative float')
+		return (
+			self.w < config.MIN_WIDTH
+		) or (
+			self.h < config.MIN_HEIGHT
+		) or (
+			self.grid < config.MIN_SIZE
+		)
+
 
 
 class FaceFrame:
@@ -56,7 +77,7 @@ class DataPoint:
 		self._frame = frame
 		self._faces = None
 
-	@property
+	@val
 	def faces(self):
 		if self._faces:
 			return self._faces
@@ -68,11 +89,10 @@ class DataPoint:
 		
 		faces1 = []
 		for face in faces:
-			if face.h >= config.MIN_HEIGHT:
-				if face.w >= config.MIN_HEIGHT:
-					if face.grid >= config.MIN_SIZE:
-						faces1.append(face)
-		print('this should be done in relative float')
+			if face.is_small:
+				continue
+			else:
+				faces1.append(face)
 
 		self._faces = faces1
 		return self._faces

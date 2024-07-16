@@ -1,6 +1,7 @@
 
 
-from datasource.base import Cache, md5
+from datasource.base import Cache 
+from datasource import md5
 
 import datasource.config as config
 
@@ -38,6 +39,10 @@ def yset(cache, framess):
 			image = full_point._frame._jpeg.data
 			if PERTURB_ONLY_FACE:
 				for face in faces:
+
+					if face.is_small:
+						continue
+
 					import cv2
 
 					x, y = face.x, face.y
@@ -47,9 +52,6 @@ def yset(cache, framess):
 
 					i = int(s * w)
 					j = int(s * h)
-
-					if i < 100 or j < 100:
-						continue
 
 					only_face = image[y:y+h, x:x+w]
 

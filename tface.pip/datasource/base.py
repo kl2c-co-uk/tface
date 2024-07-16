@@ -2,6 +2,7 @@
 import os
 import hashlib
 import zipfile
+from datasource import md5
 
 class literator():
 	def __init__(self, list):
@@ -16,12 +17,6 @@ class literator():
 		self._next += 1
 		return item
 
-def md5(input_string):
-    # Encode the string to bytes, then create an MD5 hash object
-    md5_hash = hashlib.md5(input_string.encode())
-
-    # Get the hexadecimal representation of the hash
-    return md5_hash.hexdigest()
 
 def ensure_directory_exists(file_path):
 	directory = os.path.dirname(file_path)
