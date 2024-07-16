@@ -11,18 +11,18 @@ PERTURB_ONLY_FACE = True # copy the faces and zoom into them
 # PERTURB_WIPE_FACE = True # copy the image and cover teh faces with randomness
 
 def yset_training(cache):
+	import datasource.wider as wider
 	for e in yset(cache, [wider.trainingFrames(cache)]):
 		yield e
 
 def yset_validate(cache):
+	import datasource.wider as wider
 	for e in yset(cache, [wider.validateFrames(cache)]):
 		yield e
 
 def yset(cache, framess):
 	points = 0
 	import datasource.config 
-
-	import datasource.wider as wider
 	import datasource.data as data
 	for frames in framess:
 		for frame in frames:

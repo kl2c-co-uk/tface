@@ -188,7 +188,6 @@ class DataPoint:
 		for face in faces:
 			tw = 1.0 / float(config.target_width)
 			th = 1.0 / float(config.target_height)
-			print(face)
 			label.append({
 				'x': (face.w * tw),
 				'y': (face.w * th),

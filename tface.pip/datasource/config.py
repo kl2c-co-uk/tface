@@ -1,13 +1,23 @@
 
-target_width = 1920
-target_height = 1080
+from datasource import todo
+
+
+input_width = 1920
+input_height = 1080
 heatmap_scale = 0.1
 
-EPOCHS = 2
+todo('this should not be named target - it is the input')
+target_width, target_height = input_width, input_height
+
+heatmap_width = int(heatmap_scale * target_width)
+heatmap_height = int(heatmap_scale * target_height)
+
+
+EPOCHS = 4
 BATCH_SIZE = 1
 
 # limit how big the batches are durring development
-LIMIT = 4
+LIMIT = -1
 
 # skip faces smaller than this
 MIN_WIDTH = 79
