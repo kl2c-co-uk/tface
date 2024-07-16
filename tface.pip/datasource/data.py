@@ -123,8 +123,16 @@ class DataPoint:
 		if SHRINK:
 			# if it's too wide
 			if image.shape[1] > config.target_width:
-				raise 'shrink the image width'
-				raise 'update the faces'
+				v = float(config.target_width) / float(image.shape[1])
+
+				i = int(image.shape[1] * v)
+				j = int(image.shape[0] * v)
+				
+				# resize the image
+				image = cv2.resize(image, (i,j), interpolation=cv2.INTER_AREA)
+
+				# scale the faces
+				faces = map(lambda face: face.scale(v), faces)
 			
 			# if it's too tall
 			if image.shape[0] > config.target_height:
