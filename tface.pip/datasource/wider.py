@@ -13,6 +13,7 @@ from . import config
 
 
 
+
 def trainingFrames(cache):
 	for frame in frames(cache,
 		'wider_face_train_bbx_gt.txt',

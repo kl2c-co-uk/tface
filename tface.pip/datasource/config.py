@@ -6,7 +6,7 @@ heatmap_scale = 0.1
 EPOCHS = 2
 BATCH_SIZE = 1
 
-LIMIT = 5
+LIMIT = 3
 
 RESNET_TRAIN = False
 RESNET_TOP = False
