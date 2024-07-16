@@ -4,6 +4,9 @@ https://mermaid.live/edit#pako:eNp1kcFugzAMhl_Fypm-AIedWLXuVI1Ku-TiJQYikQQFp1NX-
 
 """
 
+SHRINK = False
+SPLAT = False
+SCALE_HEAT = True
 
 class JPEGImage:
 	def __init__(self, load):
@@ -68,53 +71,58 @@ class DataPoint:
 		image = self._frame._jpeg.data
 		faces = self._frame._faces
 		
-		# numpy is height, width, channels
+		###
+		# shrink the image
+		if SHRINK:
+			# if it's too wide
+			if image.shape[1] > config.target_width:
+				raise 'shrink the image width'
+				raise 'update the faces'
+			
+			# if it's too tall
+			if image.shape[0] > config.target_height:
 
-		# if it's too wide
-		if image.shape[1] > config.target_width:
-			raise 'shrink the image width'
-			raise 'update the faces'
-		
-		# if it's too tall
-		if image.shape[0] > config.target_height:
+				t_width = float(image.shape[1]) / float(image.shape[0])
+				t_width *= float(config.target_height)
 
-			t_width = float(image.shape[1]) / float(image.shape[0])
-			t_width *= float(config.target_height)
+				# resize the image
+				image = cv2.resize(image,
+					(int(t_width), config.target_height), interpolation=cv2.INTER_AREA)
 
-			# resize the image
-			image = cv2.resize(image,
-				(int(t_width), config.target_height), interpolation=cv2.INTER_AREA)
-
-			# scale the faces
-			faces = map(lambda face: face.scale(t_width / float(image.shape[1])), faces)
-
-		# compute an offset
-		o_x = random.randint(0, config.target_width - image.shape[1])
-		o_y = random.randint(0, config.target_height - image.shape[0])
-		faces = map(lambda face: face.bump(o_x, o_y), faces)
+				# scale the faces
+				faces = map(lambda face: face.scale(t_width / float(image.shape[1])), faces)
 
 		# splat the image
-		
-		# create the random image with numpy (so much faster - relevant when we have to do this over 12k times)
-		under = np.random.randint(
-			0, 256,
-			(config.target_height, config.target_width, 3),
-			dtype=np.uint8)
+		if SPLAT:
+			assert SHRINK
+			# compute an offset
+			o_x = random.randint(0, config.target_width - image.shape[1])
+			o_y = random.randint(0, config.target_height - image.shape[0])
+			faces = map(lambda face: face.bump(o_x, o_y), faces)
 
-		# paste it over
-		oh, ow = image.shape[:2]
-		under[o_y:o_y+oh, o_x:o_x+ow] = image
-		image = under
-		under = None
+			# create the random image with numpy (so much faster - relevant when we have to do this over 12k times)
+			under = np.random.randint(
+				0, 256,
+				(config.target_height, config.target_width, 3),
+				dtype=np.uint8)
+
+			# paste it over
+			oh, ow = image.shape[:2]
+			under[o_y:o_y+oh, o_x:o_x+ow] = image
+			image = under
+			under = None
 
 		# need to perminise this
 		faces = list(faces)
 
 		# create the bad heat .png
+
 		bheat = np.zeros(
-			(int(config.target_height * config.heatmap_scale), int(config.target_width * config.heatmap_scale)),
+			((int(image.shape[0] * config.heatmap_scale), int(image.shape[1] * config.heatmap_scale)) if SCALE_HEAT else (image.shape[0], image.shape[1])),
 			dtype=np.uint8)
-		for face in map(lambda f: f.scale(config.heatmap_scale), faces):
+
+		# for face in map(lambda f: f.scale(config.heatmap_scale), faces):
+		for face in map(lambda face: face.scale(config.heatmap_scale), faces) if SCALE_HEAT else faces:
 			x, y = face.x, face.y 
 			w, h = face.w, face.h
 
@@ -127,6 +135,8 @@ class DataPoint:
 		ensure_directory_exists(png)
 		cv2.imwrite(jpg, image)
 		cv2.imwrite(png, bheat)
+
+		raise 'why the heat maps bad?' 
 
 		# create+store the json labels
 		label = []
