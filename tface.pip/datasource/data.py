@@ -38,6 +38,9 @@ class FacePatch:
 			int(self.x * v), int(self.y * v),
 			int(self.w * v), int(self.h * v)
 		)
+	@property
+	def grid(self):
+		return self.w * self.h
 
 
 class FaceFrame:
@@ -51,6 +54,30 @@ class DataPoint:
 	def __init__(self, cache, frame):
 		self._cache = cache
 		self._frame = frame
+		self._faces = None
+
+	@property
+	def faces(self):
+		if self._faces:
+			return self._faces
+		import datasource.config as config
+
+		
+		faces = sorted(self._frame._faces, key =lambda face: face.grid)[::-1]
+
+		
+		faces1 = []
+		for face in faces:
+			if face.h >= config.MIN_HEIGHT:
+				if face.w >= config.MIN_HEIGHT:
+					if face.grid >= config.MIN_SIZE:
+						faces1.append(face)
+		print('this should be done in relative float')
+
+		self._faces = faces1
+		return self._faces
+
+
 	
 	@property
 	def cache(self):
@@ -69,7 +96,7 @@ class DataPoint:
 
 		# load the image
 		image = self._frame._jpeg.data
-		faces = self._frame._faces
+		faces = self.faces
 		
 		###
 		# shrink the image

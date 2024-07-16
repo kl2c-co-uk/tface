@@ -27,14 +27,15 @@ def yset(cache, framess):
 		for frame in frames:
 
 			# yield the full point
-			yield data.DataPoint(cache, frame)
+			full_point = data.DataPoint(cache, frame)
+			yield full_point
 			points += 1
 			if datasource.config.LIMIT > 0 and points >= datasource.config.LIMIT:
 				return
 
 			# do any perturbations of the point
-			faces = frame._faces
-			image = frame._jpeg.data
+			faces = full_point.faces
+			image = full_point._frame._jpeg.data
 			if PERTURB_ONLY_FACE:
 				for face in faces:
 					import cv2

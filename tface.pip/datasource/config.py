@@ -10,8 +10,9 @@ BATCH_SIZE = 1
 LIMIT = 4
 
 # skip faces smaller than this
-MIN_WIDTH = 83
-MIN_HEIGHT = 83
+MIN_WIDTH = 79
+MIN_HEIGHT = 79
+MIN_SIZE = int(MIN_HEIGHT * MIN_WIDTH * 1.1)
 
 
 RESNET_TRAIN = False
