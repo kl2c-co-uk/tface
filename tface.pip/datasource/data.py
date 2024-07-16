@@ -4,8 +4,8 @@ https://mermaid.live/edit#pako:eNp1kcFugzAMhl_Fypm-AIedWLXuVI1Ku-TiJQYikQQFp1NX-
 
 """
 
-SHRINK = False
-SPLAT = False
+SHRINK = True
+SPLAT = True
 SCALE_HEAT = True
 
 class JPEGImage:
@@ -81,16 +81,16 @@ class DataPoint:
 			
 			# if it's too tall
 			if image.shape[0] > config.target_height:
+				v = float(config.target_height) / float(image.shape[0])
 
-				t_width = float(image.shape[1]) / float(image.shape[0])
-				t_width *= float(config.target_height)
-
+				i = int(image.shape[1] * v)
+				j = int(image.shape[0] * v)
+				
 				# resize the image
-				image = cv2.resize(image,
-					(int(t_width), config.target_height), interpolation=cv2.INTER_AREA)
+				image = cv2.resize(image, (i,j), interpolation=cv2.INTER_AREA)
 
 				# scale the faces
-				faces = map(lambda face: face.scale(t_width / float(image.shape[1])), faces)
+				faces = map(lambda face: face.scale(v), faces)
 
 		# splat the image
 		if SPLAT:
@@ -136,8 +136,6 @@ class DataPoint:
 		cv2.imwrite(jpg, image)
 		cv2.imwrite(png, bheat)
 
-		raise 'why the heat maps bad?' 
-
 		# create+store the json labels
 		label = []
 		for face in faces:
@@ -145,10 +143,10 @@ class DataPoint:
 			th = 1.0 / float(config.target_height)
 			print(face)
 			label.append({
-				x: (face.w * tw),
-				y: (face.w * th),
-				w: (face.w * tw),
-				h: (face.w * th),
+				'x': (face.w * tw),
+				'y': (face.w * th),
+				'w': (face.w * tw),
+				'h': (face.w * th),
 			})	
 		with open(jsl, 'w') as f:
 			json.dump(label, f, indent=1)

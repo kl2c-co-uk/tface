@@ -4,7 +4,7 @@ from datasource.base import Cache, md5
 
 import datasource.config as config
 
-PERTURB_ONLY_FACE = False # copy the faces and zoom into them
+PERTURB_ONLY_FACE = True # copy the faces and zoom into them
 
 
 # PERTURB_WIPE_FACE = True # copy the image and cover teh faces with randomness
@@ -94,5 +94,3 @@ if __name__ == '__main__':
 		print(f'---\n{y.cache}')
 	
 	print('whole new dataset loaded')
-
-	raise 'the heat maps are being overscaled'
