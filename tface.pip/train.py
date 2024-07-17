@@ -7,9 +7,9 @@ from datasource import Cache
 from enum import Enum
 class Mode(Enum):
 	HEAT_MAP = 1
-	COORDINATES = 2
+	PATCHES = 2
 
-mode = Mode.HEAT_MAP
+mode = Mode.PATCHES
 
 def main():
 
@@ -65,7 +65,6 @@ def tface_model():
 	# bottom/start of the network is just ... a 1080p RGB image
 	model = input_image
 
-	#
 
 	# Load the ResNet50 model pre-trained on ImageNet, without the top layer
 	resnet_base = tf.keras.applications.ResNet50(
@@ -77,12 +76,14 @@ def tface_model():
 
 	model = resnet_base(model)
 
-	# Add global average pooling layer (because of resnet?)
-	model = layers.GlobalAveragePooling2D()(model)
 
-	model = tf.keras.layers.Flatten()(model)
 
 	if Mode.HEAT_MAP == mode:
+		# Add global average pooling layer (because of resnet?)
+		model = layers.GlobalAveragePooling2D()(model)
+
+		model = tf.keras.layers.Flatten()(model)
+
 		# the "heat maps" model
 		model = tf.keras.layers.Dense(config.HEATMAP_HEIGHT * config.HEATMAP_WIDTH, activation='relu')(model)
 		model = tf.keras.layers.Reshape((config.HEATMAP_HEIGHT, config.HEATMAP_WIDTH, 1))(model)
@@ -101,10 +102,50 @@ def tface_model():
 		# we be done
 		return model
 
-	elif Mode.COORDINATES== mode:
+	elif Mode.PATCHES == mode:
+		import tensorflow.keras.layers as layer
+
+
+		# Define the RPN (Region Proposal Network)
+		rpn = layer.Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+		rpn_class = layer.Conv2D(config.PATCH_COUNT, (1, 1), activation='sigmoid')(rpn)  # config.PATCH_COUNT anchor boxes
+		rpn_bbox = layer.Conv2D(config.PATCH_COUNT, (1, 1))(rpn)  # 4 coordinates for each of the config.PATCH_COUNT anchor boxes
+
+		# Flatten the RPN outputs
+		rpn_class_flat = layer.Flatten()(rpn_class)
+		rpn_bbox_flat = layer.Flatten()(rpn_bbox)
+
+		# "anchors?"
+		# # # Define the RPN model
+		# # rpn_model = Model(inputs=input_image, outputs=[rpn_class_flat, rpn_bbox_flat])
+
+		# # # Print the model summary
+		# # rpn_model.summary()
+
+		# # # PAL SAYS;
+		# # # i asmed about the ancor boxes, but, the answer eluded me https://chatgpt.com/c/bfb8472a-bb2e-4b9e-b128-a2d5e4d0e7d0
+
+		# ... trying to BASH it into shape with big dumb ones
+		rpn_both = layer.Concatenate()([rpn_class_flat, rpn_bbox_flat])
+
+		width = config.PATCH_COUNT * 4
+		rpn_thin = layer.Dense(width * 4, activation='relu')(rpn_both)
+		rpn_thin = layer.Dense(width, activation='relu')(rpn_thin)
+
+		rpn_dumb = Model(inputs=input_image, outputs=rpn_thin)
+		rpn_dumb.summary()
+
 		
-		# the thing. the list-of-points
-		raise '???'
+		# Compile the model
+		rpn_dumb.compile(
+			optimizer='adam',
+			loss='mean_squared_error',
+			# loss='binary_crossentropy',
+			metrics=['accuracy']
+		)
+		
+		# we be done
+		return rpn_dumb
 		
 	else:
 		raise Exception('??? mode = {mode}')
@@ -161,10 +202,20 @@ def predict(model, img):
 		grayscale_image = np.squeeze(grayscale_image, axis=-1)
 		
 		return grayscale_image
-	elif Mode.COORDINATES == mode:
+	elif Mode.PATCHES == mode:
+
+		predict = model.predict(
+			# Expand dimensions to create a batch of size 1
+			np.expand_dims(img, axis=0)
+		)
 		
 		# the thing. the list-of-points
-		raise '???'
+		raise Exception(f'decode the patches from predict >>>{predict}<<<')
+
+		
+		raise Exception('create a blank')
+		raise Exception('fill in the patches in a blank')
+		raise Exception('return it!')
 		
 	else:
 		raise Exception('??? mode = {mode}')
@@ -215,6 +266,17 @@ def datasets():
 	
 	edge = '?>' # lambda a : raise Exception('set the edge function')
 
+	def preprocess_jpeg(path):
+		
+		channels = 3
+
+		image = tf.io.read_file(path)
+		image = tf.image.decode_jpeg(image, channels=channels)  # Ensure RGB
+		image = tf.image.convert_image_dtype(image, tf.float32)  # Convert to float32
+		image = image / 255.0  # Normalize to [0, 1]
+
+		return image
+
 	if Mode.HEAT_MAP == mode:
 		def heat_maps(yset):
 
@@ -227,10 +289,7 @@ def datasets():
 
 				input_path, target_path = tf.unstack(v)
 
-				input_image = tf.io.read_file(input_path)
-				input_image = tf.image.decode_jpeg(input_image, channels=3)  # Ensure RGB
-				input_image = tf.image.convert_image_dtype(input_image, tf.float32)  # Convert to float32
-				input_image = input_image / 255.0  # Normalize to [0, 1]
+				input_image = preprocess_jpeg(input_path)
 
 				target_image = tf.io.read_file(target_path)
 				target_image = tf.image.decode_png(target_image, channels=1)  # Ensure grayscale
@@ -251,11 +310,56 @@ def datasets():
 
 			return dataset
 		edge = heat_maps
-	elif Mode.COORDINATES == mode:
-		
-		# the thing. the list-of-points
-		raise '???'
-		
+	elif Mode.PATCHES == mode:
+		def patches(yset):
+
+			# Convert the list of tuples to a TensorFlow Dataset of pairs
+			dataset = map(lambda d: (d.cache[0], d.cache[2]), yset)
+			dataset = list(dataset)
+			dataset = tf.data.Dataset.from_tensor_slices(dataset)
+			def preprocess(v):
+
+				input_image, target_path = tf.unstack(v)
+
+				# read the jpeg as normal
+				input_image = preprocess_jpeg(input_image)
+
+				# read the json ... less normally
+				target_patches = tf.io.read_file(target_path)
+
+				
+
+				def parse_bounding_boxes(json_string):
+					# data = json.loads(json_string.numpy())
+					# return tf.convert_to_tensor(data, dtype=tf.float32)
+					raise Exception(
+					f"""
+						type(json_string) = {type(json_string)}
+						dir(json_string) = {dir(json_string)}
+
+						json_string = {json_string}
+
+						
+					""")
+				target_patches = tf.py_function(parse_bounding_boxes, [target_patches], tf.float32)
+				target_patches.set_shape([config.PATCH_COUNT, 4])
+				
+				return input_image, target_patches
+
+
+			# Map the dataset using the unpack_and_preprocess function
+			dataset = dataset.map(
+				preprocess,
+				num_parallel_calls=tf.data.AUTOTUNE
+			)
+
+			# finish it
+			dataset = dataset.batch(config.BATCH_SIZE)
+			dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+
+			return dataset
+
+		edge = patches		
 	else:
 		raise Exception('??? mode = {mode}')
 

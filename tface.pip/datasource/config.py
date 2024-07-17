@@ -22,6 +22,11 @@ MIN_WIDTH = 79
 MIN_HEIGHT = 79
 MIN_SIZE = int(MIN_HEIGHT * MIN_WIDTH * 1.1)
 
+
+# how many faces are in the boundin boxx/
+PATCH_COUNT = 10
+
+
 # build extra images 
 PERMUTE_FACES = False
 
