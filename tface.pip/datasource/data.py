@@ -16,7 +16,6 @@ from datasource import val, todo
 class JPEGImage:
 	def __init__(self, load):
 		self.load = load
-		self._data = None
 	
 	@val
 	def data(self):
@@ -53,7 +52,12 @@ class FacePatch:
 	
 	@val
 	def is_small(self):
-		todo('this should be done in relative float')
+		"""
+		this checks to see if the face is too small
+
+		it assumes that this image is 1920x1080 (which is bad)
+		"""
+
 		return (
 			self.w < config.MIN_WIDTH
 		) or (
