@@ -1,29 +1,32 @@
 
 from datasource import todo
 
+INPUT_WIDTH = 1920
+INPUT_HEIGHT = 1080
 
-input_width = 1920
-input_height = 1080
-heatmap_scale = 0.1
+HEATMAP_SCALE = 0.1
+HEATMAP_WIDTH = int(HEATMAP_SCALE * INPUT_WIDTH)
+HEATMAP_HEIGHT = int(HEATMAP_SCALE * INPUT_HEIGHT)
 
-todo('this should not be named target - it is the input')
-target_width, target_height = input_width, input_height
 
-heatmap_width = int(heatmap_scale * target_width)
-heatmap_height = int(heatmap_scale * target_height)
 
 
 EPOCHS = 4
 BATCH_SIZE = 1
 
-# limit how big the batches are durring development
-LIMIT = -1
+# limit how big the datasets are durring development
+LIMIT = 10
 
-# skip faces smaller than this
+# skip faces smaller than this in their source pixels
 MIN_WIDTH = 79
 MIN_HEIGHT = 79
 MIN_SIZE = int(MIN_HEIGHT * MIN_WIDTH * 1.1)
 
+# build extra images 
+PERMUTE_FACES = False
+
+
+# adjust the model
 
 RESNET_TRAIN = False
 RESNET_TOP = False

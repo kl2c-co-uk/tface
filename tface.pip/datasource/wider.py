@@ -3,16 +3,10 @@
 import multiprocessing
 import numpy
 
-# from .config import SMALL_LIMIT
 
-from . import *
-from .base import *
-from .context import *
-
-from . import config
-
-
-
+import datasource.data as data
+import datasource.config as config
+from datasource import *
 
 def trainingFrames(cache):
 	for frame in frames(cache,
@@ -37,8 +31,6 @@ def frames(cache, txt, url):
 
 	# download the images file
 	images = cache.download(url)
-
-	import datasource.data as data
 	
 	for lines in ZipWalk(annotations).text(txt):
 		while lines.more():
@@ -57,12 +49,17 @@ def frames(cache, txt, url):
 					raise Exception('empty entry had a funky line!')
 			else:
 				while len(faces) < face_count:
-					x, y, w, h, *_ = lines.take().split(' ')
+					# grab the first four and convert them to ints
+					x, y, w, h = map(int, lines.take().split(' ')[:4])
 
-					x, y, w, h = tuple(map(int, (x, y, w, h)))
-
-					if h <= 0 or w <= 0:
-						# print(f'found a zero-face in the data for `{image}` and i am skipping it')
+					# skip ones that're too small (this is also done later, but, it's nice to do these early)
+					if (
+						w < config.MIN_WIDTH
+					) or (
+						h < config.MIN_HEIGHT
+					) or (
+						(w * h) < config.MIN_SIZE
+					):
 						face_count -= 1
 					else:
 
@@ -75,7 +72,9 @@ def frames(cache, txt, url):
 								x=x, y=y, w=w, h=h
 							)
 						)
-			assert 0<= face_count
+
+			# just check that face count didn't get weird
+			assert 0 <= face_count
 			
 			yield data.FaceFrame(
 				md5(jpeg_path),

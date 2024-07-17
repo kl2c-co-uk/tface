@@ -1,4 +1,10 @@
 #!/bin/bash
+
+##
+# junk pal needs to update but shouldn't mater for anyone else (sorry)
+##
+
+
 sling-tface
 
 

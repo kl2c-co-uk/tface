@@ -1,22 +1,21 @@
 
 
 from datasource import config
+from datasource import Cache 
 
+
+from enum import Enum
+class Mode(Enum):
+	HEAT_MAP = 1
+	COORDINATES = 2
+
+mode = Mode.HEAT_MAP
 
 def main():
 
 	training, validate = datasets()
 
 	model = tface_model()
-
-	# Compile the model
-	model.compile(
-		optimizer='adam',
-		loss='mean_squared_error',
-		metrics=['accuracy']
-	)
-
-
 	
 	# Get the image path
 	contents = 'target/cache/'
@@ -38,10 +37,9 @@ def main():
 	preview(raw_image, untrained, truth, trained)
 
 def tface_model():
-	from datasource import config
 
 
-	input_shape = (config.input_height, config.input_width, 3)
+	input_shape = (config.INPUT_HEIGHT, config.INPUT_WIDTH, 3)
 
 	import tensorflow as tf
 	from tensorflow.keras.layers import Layer, Input
@@ -66,39 +64,15 @@ def tface_model():
 
 	# bottom/start of the network is just ... a 1080p RGB image
 	model = input_image
-	
 
-	# resize
-	model = tf.keras.layers.Resizing(height=224, width=224)(model)
-
-
-	# # Load the pre-trained face detection model from TensorFlow Hub
-	# face_detector = hub.load("https://tfhub.dev/tensorflow/ssd_mobilenet_v2/2")
-	# def lamdba(images):
-		
-	# 	# squish into a uint8 layer
-	# 	images = tf.clip_by_value(images, 0, 1)
-	# 	images *= 255.0
-	# 	images = tf.cast(images, tf.uint8)
-		
-	# 	# do the detection
-	# 	images = face_detector(images)
-	# 	images = images['detection_boxes']
-
-	# 	return images
-	# model = Lambda(lamdba)(model)
-
-
-
+	#
 
 	# Load the ResNet50 model pre-trained on ImageNet, without the top layer
 	resnet_base = tf.keras.applications.ResNet50(
 		include_top=config.RESNET_TOP,
 		weights='imagenet',
-		input_shape=(224, 224, 3)
+		input_shape=input_shape
 	)
-
-	# Set the base model to be not trainable
 	resnet_base.trainable = config.RESNET_TRAIN
 
 	model = resnet_base(model)
@@ -108,23 +82,33 @@ def tface_model():
 
 	model = tf.keras.layers.Flatten()(model)
 
-	model = tf.keras.layers.Dense(config.heatmap_height * config.heatmap_width, activation='relu')(model)
-
-	model = tf.keras.layers.Reshape((config.heatmap_height, config.heatmap_width, 1))(model)
-
-
-
-	##
-	# hekkit; just do ... dense layers?
+	if Mode.HEAT_MAP == mode:
+		# the "heat maps" model
+		model = tf.keras.layers.Dense(config.HEATMAP_HEIGHT * config.HEATMAP_WIDTH, activation='relu')(model)
+		model = tf.keras.layers.Reshape((config.HEATMAP_HEIGHT, config.HEATMAP_WIDTH, 1))(model)
+	elif Mode.COORDINATES== mode:
+		
+		# the thing. the list-of-points
+		raise '???'
+		
+	else:
+		raise Exception('??? mode = {mode}')
 
 	##
 	# build it into a model
 	model = Model(inputs=input_image, outputs=model)
 
 
+	# Compile the model
+	model.compile(
+		optimizer='adam',
+		loss='mean_squared_error',
+		# loss='binary_crossentropy',
+		metrics=['accuracy']
+	)
 
 
-	# this was the "old" model - might be safer
+	# this was the "old" model - might be something to expolore
 	"""
 	src_wh = input_size
 	out_wh = output_size
@@ -156,36 +140,33 @@ def tface_model():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 	return model
 
 def predict(model, img):
+
 	from tensorflow.keras.preprocessing import image
 	import numpy as np
 
-	# Predict grayscale image
-	grayscale_image = model.predict(
-		# Expand dimensions to create a batch of size 1
-		np.expand_dims(img, axis=0)
-	)
+	if Mode.HEAT_MAP == mode:
+		# Predict grayscale image
+		grayscale_image = model.predict(
+			# Expand dimensions to create a batch of size 1
+			np.expand_dims(img, axis=0)
+		)
 
-	# Remove the batch dimension and squeeze the grayscale channel
-	grayscale_image = np.squeeze(grayscale_image, axis=0)
-	grayscale_image = np.squeeze(grayscale_image, axis=-1)
-	
-	return grayscale_image
+		# Remove the batch dimension and squeeze the grayscale channel
+		grayscale_image = np.squeeze(grayscale_image, axis=0)
+		grayscale_image = np.squeeze(grayscale_image, axis=-1)
+		
+		return grayscale_image
+	elif Mode.COORDINATES == mode:
+		
+		# the thing. the list-of-points
+		raise '???'
+		
+	else:
+		raise Exception('??? mode = {mode}')
+
 
 def load_img(image_path):
 	from tensorflow.keras.preprocessing import image
@@ -230,44 +211,53 @@ def datasets():
 	
 	import tensorflow as tf
 	
-	def edge(yset):
+	edge = '?>' # lambda a : raise Exception('set the edge function')
+
+	if Mode.HEAT_MAP == mode:
+		def heat_maps(yset):
+
+			# Convert the list of pairs to a TensorFlow Dataset
+			dataset = map(lambda d: (d.cache[0], d.cache[1]), yset)
+			dataset = list(dataset)
+			dataset = tf.data.Dataset.from_tensor_slices(dataset)
+
+			def preprocess(v):
+
+				input_path, target_path = tf.unstack(v)
+
+				input_image = tf.io.read_file(input_path)
+				input_image = tf.image.decode_jpeg(input_image, channels=3)  # Ensure RGB
+				input_image = tf.image.convert_image_dtype(input_image, tf.float32)  # Convert to float32
+				input_image = input_image / 255.0  # Normalize to [0, 1]
+
+				target_image = tf.io.read_file(target_path)
+				target_image = tf.image.decode_png(target_image, channels=1)  # Ensure grayscale
+				target_image = tf.image.convert_image_dtype(target_image, tf.float32)  # Convert to float32
+				target_image = target_image / 255.0  # Normalize to [0, 1]
+
+				return input_image, target_image
+
+			# Map the dataset using the unpack_and_preprocess function
+			dataset = dataset.map(
+				preprocess,
+				num_parallel_calls=tf.data.AUTOTUNE
+			)
+
+			# finish it
+			dataset = dataset.batch(config.BATCH_SIZE)
+			dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+
+			return dataset
+		edge = heat_maps
+	elif Mode.COORDINATES == mode:
+		
+		# the thing. the list-of-points
+		raise '???'
+		
+	else:
+		raise Exception('??? mode = {mode}')
 
 
-
-		# Convert the list of pairs to a TensorFlow Dataset
-		dataset = map(lambda d: (d.cache[0], d.cache[1]), yset)
-		dataset = list(dataset)
-		dataset = tf.data.Dataset.from_tensor_slices(dataset)
-
-		def preprocess(v):
-
-			input_path, target_path = tf.unstack(v)
-
-			input_image = tf.io.read_file(input_path)
-			input_image = tf.image.decode_jpeg(input_image, channels=3)  # Ensure RGB
-			input_image = tf.image.convert_image_dtype(input_image, tf.float32)  # Convert to float32
-			input_image = input_image / 255.0  # Normalize to [0, 1]
-
-			target_image = tf.io.read_file(target_path)
-			target_image = tf.image.decode_png(target_image, channels=1)  # Ensure grayscale
-			target_image = tf.image.convert_image_dtype(target_image, tf.float32)  # Convert to float32
-			target_image = target_image / 255.0  # Normalize to [0, 1]
-
-			return input_image, target_image
-
-		# Map the dataset using the unpack_and_preprocess function
-		dataset = dataset.map(
-			preprocess,
-			num_parallel_calls=tf.data.AUTOTUNE
-		)
-
-		# finish it
-		dataset = dataset.batch(config.BATCH_SIZE)
-		dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-
-		return dataset
-
-	from datasource.base import Cache 
 	import dataset
 	cache = Cache('target/')
 

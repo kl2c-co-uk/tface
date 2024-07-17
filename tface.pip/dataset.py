@@ -1,14 +1,8 @@
 
 
-from datasource.base import Cache 
-from datasource import md5
+from datasource import md5, Cache
 
 import datasource.config as config
-
-PERTURB_ONLY_FACE = True # copy the faces and zoom into them
-
-
-# PERTURB_WIPE_FACE = True # copy the image and cover teh faces with randomness
 
 def yset_training(cache):
 	import datasource.wider as wider
@@ -34,10 +28,10 @@ def yset(cache, framess):
 			if datasource.config.LIMIT > 0 and points >= datasource.config.LIMIT:
 				return
 
-			# do any perturbations of the point
+			# permutations?
 			faces = full_point.faces
 			image = full_point._frame._jpeg.data
-			if PERTURB_ONLY_FACE:
+			if config.PERMUTE_FACES:
 				for face in faces:
 
 					if face.is_small:
@@ -48,7 +42,7 @@ def yset(cache, framess):
 					x, y = face.x, face.y
 					w, h = face.w, face.h
 
-					s = config.target_height/float(h)
+					s = config.INPUT_HEIGHT / float(h)
 
 					i = int(s * w)
 					j = int(s * h)
@@ -89,10 +83,10 @@ if __name__ == '__main__':
 
 	cache = Cache('target/')
 
-	import datasource.wider as wider
 
 	for y in yset_training(cache):
 		print(f'---\n{y.cache}')
+
 	for y in yset_validate(cache):
 		print(f'---\n{y.cache}')
 	

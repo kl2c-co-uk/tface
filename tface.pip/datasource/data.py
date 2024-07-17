@@ -81,11 +81,8 @@ class DataPoint:
 	def faces(self):
 		if self._faces:
 			return self._faces
-		import datasource.config as config
-
 		
 		faces = sorted(self._frame._faces, key =lambda face: face.grid)[::-1]
-
 		
 		faces1 = []
 		for face in faces:
@@ -103,7 +100,6 @@ class DataPoint:
 	def cache(self):
 		import json, os, random, cv2
 		import numpy as np
-		import datasource.config as config
 
 		jpg = f'{self._cache.target}cache/{self._frame._bound}.jpg'
 		png = f'{self._cache.target}cache/{self._frame._bound}.png'
@@ -122,8 +118,8 @@ class DataPoint:
 		# shrink the image
 		if SHRINK:
 			# if it's too wide
-			if image.shape[1] > config.target_width:
-				v = float(config.target_width) / float(image.shape[1])
+			if image.shape[1] > config.INPUT_WIDTH:
+				v = float(config.INPUT_WIDTH) / float(image.shape[1])
 
 				i = int(image.shape[1] * v)
 				j = int(image.shape[0] * v)
@@ -135,8 +131,8 @@ class DataPoint:
 				faces = map(lambda face: face.scale(v), faces)
 			
 			# if it's too tall
-			if image.shape[0] > config.target_height:
-				v = float(config.target_height) / float(image.shape[0])
+			if image.shape[0] > config.INPUT_HEIGHT:
+				v = float(config.INPUT_HEIGHT) / float(image.shape[0])
 
 				i = int(image.shape[1] * v)
 				j = int(image.shape[0] * v)
@@ -151,14 +147,14 @@ class DataPoint:
 		if SPLAT:
 			assert SHRINK
 			# compute an offset
-			o_x = random.randint(0, config.target_width - image.shape[1])
-			o_y = random.randint(0, config.target_height - image.shape[0])
+			o_x = random.randint(0, config.INPUT_WIDTH - image.shape[1])
+			o_y = random.randint(0, config.INPUT_HEIGHT - image.shape[0])
 			faces = map(lambda face: face.bump(o_x, o_y), faces)
 
 			# create the random image with numpy (so much faster - relevant when we have to do this over 12k times)
 			under = np.random.randint(
 				0, 256,
-				(config.target_height, config.target_width, 3),
+				(config.INPUT_HEIGHT, config.INPUT_WIDTH, 3),
 				dtype=np.uint8)
 
 			# paste it over
@@ -171,13 +167,11 @@ class DataPoint:
 		faces = list(faces)
 
 		# create the bad heat .png
-
 		bheat = np.zeros(
-			((int(image.shape[0] * config.heatmap_scale), int(image.shape[1] * config.heatmap_scale)) if SCALE_HEAT else (image.shape[0], image.shape[1])),
+			((int(image.shape[0] * config.HEATMAP_SCALE), int(image.shape[1] * config.HEATMAP_SCALE)) if SCALE_HEAT else (image.shape[0], image.shape[1])),
 			dtype=np.uint8)
 
-		# for face in map(lambda f: f.scale(config.heatmap_scale), faces):
-		for face in map(lambda face: face.scale(config.heatmap_scale), faces) if SCALE_HEAT else faces:
+		for face in map(lambda face: face.scale(config.HEATMAP_SCALE), faces) if SCALE_HEAT else faces:
 			x, y = face.x, face.y 
 			w, h = face.w, face.h
 
@@ -194,8 +188,8 @@ class DataPoint:
 		# create+store the json labels
 		label = []
 		for face in faces:
-			tw = 1.0 / float(config.target_width)
-			th = 1.0 / float(config.target_height)
+			tw = 1.0 / float(config.INPUT_WIDTH)
+			th = 1.0 / float(config.INPUT_HEIGHT)
 			label.append({
 				'x': (face.w * tw),
 				'y': (face.w * th),
