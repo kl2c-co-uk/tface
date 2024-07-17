@@ -86,6 +86,21 @@ def tface_model():
 		# the "heat maps" model
 		model = tf.keras.layers.Dense(config.HEATMAP_HEIGHT * config.HEATMAP_WIDTH, activation='relu')(model)
 		model = tf.keras.layers.Reshape((config.HEATMAP_HEIGHT, config.HEATMAP_WIDTH, 1))(model)
+
+		# build it into a model
+		model = Model(inputs=input_image, outputs=model)
+
+		# Compile the model
+		model.compile(
+			optimizer='adam',
+			loss='mean_squared_error',
+			# loss='binary_crossentropy',
+			metrics=['accuracy']
+		)
+		
+		# we be done
+		return model
+
 	elif Mode.COORDINATES== mode:
 		
 		# the thing. the list-of-points
@@ -93,19 +108,6 @@ def tface_model():
 		
 	else:
 		raise Exception('??? mode = {mode}')
-
-	##
-	# build it into a model
-	model = Model(inputs=input_image, outputs=model)
-
-
-	# Compile the model
-	model.compile(
-		optimizer='adam',
-		loss='mean_squared_error',
-		# loss='binary_crossentropy',
-		metrics=['accuracy']
-	)
 
 
 	# this was the "old" model - might be something to expolore
