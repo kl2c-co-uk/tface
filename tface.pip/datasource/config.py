@@ -12,10 +12,10 @@ HEATMAP_HEIGHT = int(HEATMAP_SCALE * INPUT_HEIGHT)
 
 
 EPOCHS = 4
-BATCH_SIZE = 1
+BATCH_SIZE = 2
 
 # limit how big the datasets are durring development
-LIMIT = 10
+LIMIT = 2
 
 # skip faces smaller than this in their source pixels
 MIN_WIDTH = 79

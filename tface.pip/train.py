@@ -24,9 +24,7 @@ def main():
 	untrained = predict(model, raw_image)
 	truth =  load_img(contents + image + '.png')
 
-
 	# Train the model
-	todo("train be mro!")
 	history = model.fit(
 		training,
 		validation_data=validate,
@@ -232,7 +230,7 @@ def predict(model, img):
 		# blank image
 		grayscale_image = np.zeros((config.HEATMAP_HEIGHT,config.HEATMAP_WIDTH), dtype=np.uint8)
 
-		# decode pathces and fill them in
+		# decode patches and fill them in
 		for i in range(0, config.PATCH_COUNT):
 			v = i * 4
 
@@ -358,19 +356,22 @@ def datasets():
 				
 
 				def parse_bounding_boxes(json_string):
-					# data = json.loads(json_string.numpy())
-					# return tf.convert_to_tensor(data, dtype=tf.float32)
-					raise Exception(
-					f"""
-						type(json_string) = {type(json_string)}
-						dir(json_string) = {dir(json_string)}
+					import json
+					data = [] # json.loads(json_string.numpy())
+					
+					for patch in json.loads(json_string.numpy()):
+						if len(data) < config.PATCH_COUNT * 4:
+							data.append(float(patch['x']))
+							data.append(float(patch['y']))
+							data.append(float(patch['w']))
+							data.append(float(patch['h']))
+					while len(data) < config.PATCH_COUNT * 4:
+						data.append(0.0)
 
-						json_string = {json_string}
+					return tf.convert_to_tensor(data, dtype=tf.float32)
 
-						
-					""")
 				target_patches = tf.py_function(parse_bounding_boxes, [target_patches], tf.float32)
-				target_patches.set_shape([config.PATCH_COUNT, 4])
+				target_patches.set_shape([config.PATCH_COUNT * 4])
 				
 				return input_image, target_patches
 
