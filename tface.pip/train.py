@@ -1,7 +1,6 @@
 
 
-from datasource import config
-from datasource import Cache 
+from datasource import config, Cache, todo
 
 
 from enum import Enum
@@ -27,11 +26,12 @@ def main():
 
 
 	# Train the model
+	todo("train be mro!")
 	history = model.fit(
 		training,
 		validation_data=validate,
 		epochs=config.EPOCHS
-	)  # Adjust the number of epoch
+	)
 
 	trained = predict(model, raw_image)
 	preview(raw_image, untrained, truth, trained)
@@ -126,15 +126,27 @@ def tface_model():
 		# # # i asmed about the ancor boxes, but, the answer eluded me https://chatgpt.com/c/bfb8472a-bb2e-4b9e-b128-a2d5e4d0e7d0
 
 		# ... trying to BASH it into shape with big dumb ones
-		rpn_both = layer.Concatenate()([rpn_class_flat, rpn_bbox_flat])
+		rpn_dumb = layer.Concatenate()([rpn_class_flat, rpn_bbox_flat])
 
+		# rpn_dumb = layer.Dense(width * config.PATCH_COUNT, activation='relu')(rpn_dumb)
+		# rpn_dumb = layer.Dense(width, activation='relu')(rpn_dumb)
+
+		# what is this? waterfall? idk.
 		width = config.PATCH_COUNT * 4
-		rpn_thin = layer.Dense(width * 4, activation='relu')(rpn_both)
-		rpn_thin = layer.Dense(width, activation='relu')(rpn_thin)
+		patches = []
+		while len(patches) < config.PATCH_COUNT:
+			pile = [rpn_dumb]
+			for p in patches:
+				pile.append(p)
+			patch = layer.Concatenate()(pile)
+			print(patch.shape)
+			patch = tf.keras.layers.Dense(width + (4*len(pile)), activation='relu')(patch)
+			patch = tf.keras.layers.Dense(4, activation='relu')(patch)
+			patches.append(patch)
+		rpn_dumb = layer.Concatenate()(patches)
 
-		rpn_dumb = Model(inputs=input_image, outputs=rpn_thin)
+		rpn_dumb = Model(inputs=input_image, outputs=rpn_dumb)
 		rpn_dumb.summary()
-
 		
 		# Compile the model
 		rpn_dumb.compile(
@@ -202,20 +214,36 @@ def predict(model, img):
 		grayscale_image = np.squeeze(grayscale_image, axis=-1)
 		
 		return grayscale_image
+
+
+
 	elif Mode.PATCHES == mode:
 
 		predict = model.predict(
 			# Expand dimensions to create a batch of size 1
 			np.expand_dims(img, axis=0)
 		)
-		
-		# the thing. the list-of-points
-		raise Exception(f'decode the patches from predict >>>{predict}<<<')
 
+		# the thing. the list-of-points
+		assert 1 == len(predict)
+		predict = predict[0]		
+		assert (4*config.PATCH_COUNT == len(predict))
 		
-		raise Exception('create a blank')
-		raise Exception('fill in the patches in a blank')
-		raise Exception('return it!')
+		# blank image
+		grayscale_image = np.zeros((config.HEATMAP_HEIGHT,config.HEATMAP_WIDTH), dtype=np.uint8)
+
+		# decode pathces and fill them in
+		for i in range(0, config.PATCH_COUNT):
+			v = i * 4
+
+			x = int(predict[v+0] * config.HEATMAP_WIDTH)
+			y = int(predict[v+1] * config.HEATMAP_HEIGHT)
+			w = int(predict[v+2] * config.HEATMAP_WIDTH)
+			h = int(predict[v+3] * config.HEATMAP_HEIGHT)
+
+			grayscale_image[y:y + h, x:x + w] = 255
+
+		return grayscale_image
 		
 	else:
 		raise Exception('??? mode = {mode}')
