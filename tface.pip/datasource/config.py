@@ -1,6 +1,22 @@
 
 from datasource import todo
 
+INPUT_SIZE = 1280
+
+EPOCHS = 2
+BATCH_SIZE = 2
+
+# limit how big the datasets are durring development
+LIMIT = 4
+
+"""
+
+	(the rest is out of date)
+
+"""
+
+
+
 INPUT_WIDTH = 1920
 INPUT_HEIGHT = 1080
 
@@ -11,13 +27,7 @@ HEATMAP_HEIGHT = int(HEATMAP_SCALE * INPUT_HEIGHT)
 
 
 
-EPOCHS = 4
-BATCH_SIZE = 2
-
-# limit how big the datasets are durring development
-LIMIT = 2
-
-# skip faces smaller than this in their source pixels
+# skip faces smaller than this in their source pixels 
 MIN_WIDTH = 79
 MIN_HEIGHT = 79
 MIN_SIZE = int(MIN_HEIGHT * MIN_WIDTH * 1.1)
