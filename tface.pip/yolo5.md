@@ -1,22 +1,34 @@
 
+> 2024-07-19; this is current one
+> am trying to mak the unpacking facter
 
 
-
-https://blog.paperspace.com/train-yolov5-custom-data/
-https://chatgpt.com/c/42665fa1-7076-4ad4-9e8e-c87a27eb5a53
-
-
-```batch
-
+```bat
 conda create --prefix target/pytorch python=3.8
 
 conda activate target/pytorch
 
 conda install pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia
 
-pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt
+pip install -r yolo5.txt
+
+python yolo5.py
+```
+
+... or if you're developing ...
 
 ```
+nodemon --ignore target yolo5.py
+```
+
+
+
+## junk notes
+
+
+https://blog.paperspace.com/train-yolov5-custom-data/
+https://chatgpt.com/c/42665fa1-7076-4ad4-9e8e-c87a27eb5a53
+
 
 
 

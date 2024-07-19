@@ -6,6 +6,7 @@ import os, shutil
 
 import datasource.config as config
 from datasource import Cache, md5, ZipWalk, ensure_directory_exists
+from datasource.data import Invoice, zipTrek
 import subprocess
 
 import torch
@@ -154,6 +155,8 @@ def yolo5wider(cache, group, txt, url):
 
 	point_count = 0
 
+	invoice = Invoice()
+
 	for point in wider(annotations, txt):
 		if config.LIMIT > 0 and point_count >= config.LIMIT:
 			break
@@ -173,7 +176,12 @@ def yolo5wider(cache, group, txt, url):
 			ensure_directory_exists(jpg)
 			ensure_directory_exists(txt)
 
-			for data in ZipWalk(images).read(path):
+			raise 'path is not being SAVED and we are runnign with the last value'
+
+			# for data in ZipWalk(images).read(path):
+			def callback(read):
+				raise Exception(f'read {path}')
+				data = read()
 				import cv2
 				import numpy as np 
 
@@ -211,6 +219,14 @@ def yolo5wider(cache, group, txt, url):
 							skipped += 1
 					if 0 != skipped:
 						print(f'skipped {skipped} out of {len(faces)} {path}')
+			invoice.request(path, callback)
+	
+	print('ready to fulfill that invoice')
+	for name, read in zipTrek(images, 'WIDER_train/images/'):
+		invoice.respond(name, read)
+	
+	raise Exception('did the invoice epty? '+str(invoice.waiting))
+	assert 0 == invoice.waiting
 
 	print(f'prepared dataset >{group}< of {point_count} points (or more!)')
 

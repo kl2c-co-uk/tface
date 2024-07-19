@@ -1,4 +1,5 @@
 
+> 2024-07-19; the yolo5 stuff is current, but, i've still not "got it"
 
 > 2024-07-04; this needs to be updated ... sorry
 
