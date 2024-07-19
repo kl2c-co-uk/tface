@@ -1,10 +1,14 @@
 
 from datasource import todo
 
-INPUT_SIZE = 1280
+INPUT_SIZE = 640
 
 EPOCHS = 40
-BATCH_SIZE = 100
+
+BATCH_SIZE = 16
+# 16 = 3.68G
+# 12 = 3G?
+# ... bugger batches finish epochs faster, but, need more GPU memeory ...
 
 # limit how big the datasets are durring development
 LIMIT = 0
