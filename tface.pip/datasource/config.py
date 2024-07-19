@@ -3,11 +3,11 @@ from datasource import todo
 
 INPUT_SIZE = 1280
 
-EPOCHS = 2
-BATCH_SIZE = 2
+EPOCHS = 40
+BATCH_SIZE = 100
 
 # limit how big the datasets are durring development
-LIMIT = 4
+LIMIT = 0
 
 """
 

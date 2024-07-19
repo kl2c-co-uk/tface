@@ -683,7 +683,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b40d18eddf2ff842ade49e247152b97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelAsset: {fileID: 5022602860645237092, guid: 9df65d37aba38b843a7a57761027a149, type: 3}
+  modelAsset: {fileID: 5022602860645237092, guid: 2fa5008cb6a33d34a9a8f9d31eb13778, type: 3}
   cube1: {fileID: 2028568011}
   cube2: {fileID: 665564741}
   webcamDisplay: {fileID: 543840717}

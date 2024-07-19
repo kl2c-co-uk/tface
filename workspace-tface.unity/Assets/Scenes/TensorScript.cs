@@ -59,11 +59,17 @@ public class TensorScript : MonoBehaviour
             Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
             Tensor inputTensor = new Tensor(inputTesorRenderTexture, channels: 3);
 
+            inputTensor.Reshape(new int[] { 1, 1, 2, 1, 3, 6, 160, 160 });
+
             // Execute the model with the input tensor
             worker.Execute(inputTensor);
 
             // Retrieve the output tensor (if needed)
             Tensor outputTensor = worker.PeekOutput();
+
+            Debug.Log(outputTensor);
+            Debug.Log(outputTensor);
+            Debug.Log(outputTensor);
 
             var o0 = outputTensor[0, 0, 0, 0];
             var o1 = outputTensor[0, 0, 0, 1];

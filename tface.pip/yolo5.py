@@ -8,14 +8,17 @@ import datasource.config as config
 from datasource import Cache, md5, ZipWalk, ensure_directory_exists
 import subprocess
 
+import torch
+assert(torch.cuda.is_available())
+
 def main():
 
 	os.makedirs('target/yolo-dataset/', exist_ok=True)
 
 	cache = Cache('target/')
 
+	##
 	# build the datasets
-
 	yolo5wider(cache, 'train',
 		'wider_face_train_bbx_gt.txt',
 		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
@@ -79,11 +82,9 @@ def main():
 	else:
 		print("Error training YOLOv5 project:", result.stderr)
 
-
-
 	##
 	# export the model
-
+	print('exporting ...')
 	experiments = os.listdir(git + '/runs/train/')
 	experiments.sort()
 	weights = (git + '/runs/train/' + experiments[-1] + '/weights/best.pt')
@@ -96,6 +97,10 @@ def main():
 			"--img-size", str(config.INPUT_SIZE),
 			"--batch-size", str(config.BATCH_SIZE),
 			"--device", "cpu",  # or "cuda" for GPU
+
+			'--opset', '9',
+
+
 			"--include", "onnx"  # specify the format to export
 		],
 		cwd=git,
@@ -109,11 +114,29 @@ def main():
 	else:
 		print("Error during model export:", result.stderr)
 	weights = weights[:-2]+'onnx'
-
+	
 	##
-	# copy it into/over the/a Unity file
+	# simply it into the unity project
+	import onnx
+	from onnxsim import simplify
+
+	# Load your ONNX model
+	onnx_model = onnx.load(weights)
+	print(f'onnx_model.opset_import[0].version = {onnx_model.opset_import[0].version}')
+	assert 9 == onnx_model.opset_import[0].version
+
+	# Simplify the model
+	model_simp, check = simplify(onnx_model)
+
+	# Save the simplified model
 	out = os.path.abspath('../workspace-tface.unity/Assets/Scenes/yoloface.onnx')
-	shutil.move(weights, out)
+	onnx.save(model_simp, out)
+
+
+	# ##
+	# # copy it into/over the/a Unity file
+	# out = os.path.abspath('../workspace-tface.unity/Assets/Scenes/yoloface.onnx')
+	# shutil.move(weights, out)
 	
 	print('')
 	print('')
