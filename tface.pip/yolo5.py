@@ -11,7 +11,7 @@ import subprocess
 import torch
 assert(torch.cuda.is_available())
 
-def main():
+def main(args):
 
 	os.makedirs('target/yolo-dataset/', exist_ok=True)
 
@@ -19,16 +19,29 @@ def main():
 
 	##
 	# build the datasets
-	yolo5wider(cache, 'train',
-		'wider_face_train_bbx_gt.txt',
-		'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
-	)
+	if args.extract:
+		yolo5wider(cache, 'train',
+			'wider_face_train_bbx_gt.txt',
+			'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
+		)
 
-	yolo5wider(cache, 'val',
-		'wider_face_val_bbx_gt.txt',
-		'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
-	)
+		yolo5wider(cache, 'val',
+			'wider_face_val_bbx_gt.txt',
+			'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
+		)
 
+	if args.clone:
+		git = yolo5clone()
+
+		if args.train:
+			train(git)
+
+		if args.export:
+			export(git)
+
+	print('i think that is it')
+
+def yolo5clone():
 	##
 	# checkout the yolo5 project
 	git = os.path.abspath("target/yolov5")
@@ -44,7 +57,9 @@ def main():
 			print("YOLOv5 project cloned successfully.")
 		else:
 			print("Error cloning YOLOv5 project:", result.stderr)
+	return git
 
+def train(git):
 	##
 	# write the/a yaml
 	yaml = os.path.abspath('target/yolo5.yaml')
@@ -59,6 +74,7 @@ def main():
 				- face
 			""")
 		)
+
 
 	##
 	# train it?
@@ -82,6 +98,7 @@ def main():
 	else:
 		print("Error training YOLOv5 project:", result.stderr)
 
+def export(git):
 	##
 	# export the model
 	print('exporting ...')
@@ -132,17 +149,6 @@ def main():
 	out = os.path.abspath('../workspace-tface.unity/Assets/Scenes/yoloface.onnx')
 	onnx.save(model_simp, out)
 
-
-	# ##
-	# # copy it into/over the/a Unity file
-	# out = os.path.abspath('../workspace-tface.unity/Assets/Scenes/yoloface.onnx')
-	# shutil.move(weights, out)
-	
-	print('')
-	print('')
-	print('')
-	print('i think that is it')
-
 def yolo5wider(cache, group, txt, url):
 	# download the annotations file
 	annotations = cache.download(
@@ -184,33 +190,39 @@ def yolo5wider(cache, group, txt, url):
 				dw = 1.0 / float(iw)
 				dh = 1.0 / float(ih)
 
-				# write the bytes
-				with open(jpg, 'wb') as file:
-					file.write(data)
+				labels = []
+				skipped = 0
+				for face in faces:
+					try:
+						x, y, w, h = face
 
-				# write the labels
-				with open(txt, 'w') as file:
-					skipped = 0
-					for face in faces:
-						try:
-							x, y, w, h = face
+						assert 0 <= x
+						assert (x+w) < iw, f'for `{group}` >{path}< iw = {iw} and x={x}, w={w}'
+						assert 0 <= y
+						assert (y+h) < ih
 
-							assert 0 <= x
-							assert (x+w) < iw, f'for `{group}` >{path}< iw = {iw} and x={x}, w={w}'
-							assert 0 <= y
-							assert (y+h) < ih
+						x = (x + (w/2)) * dw
+						w *= dw
 
-							x = (x + (w/2)) * dw
-							w *= dw
+						y = (y + (h/2)) * dh
+						h *= dh
 
-							y = (y + (h/2)) * dh
-							h *= dh
-
-							file.write(f'0 {x} {y} {w} {h}\n')
-						except AssertionError as e:
-							skipped += 1
-					if 0 != skipped:
-						print(f'skipped {skipped} out of {len(faces)} {path}')
+						labels.append(f'0 {x} {y} {w} {h}')
+					except AssertionError as e:
+						skipped += 1
+				if 0 != skipped:
+					
+					print(f'skipped {group} / {fKey} named {path} because {skipped} out of {len(faces)} faces were out of bounds')
+					point_count -= 1
+				else:
+					# write the bytes
+					with open(jpg, 'wb') as file:
+						file.write(data)
+					# write the labels
+					with open(txt, 'w') as file:
+						for label in labels:
+							file.write(label)
+							file.write('\n')
 
 	print(f'prepared dataset >{group}< of {point_count} points (or more!)')
 
@@ -249,8 +261,29 @@ def wider(annotations, txt):
 			
 			yield (jpeg_path, faces)
 
+if '__main__' == __name__:
+	import argparse
+	parser = argparse.ArgumentParser(description="YOLOv5 Face Detector (maybe)")
+	parser.add_argument('-extract', action='store_true', help='only do the extraction step')
+	args = parser.parse_args()
 
+	class Blurb:
+		def __init__(self, **kwargs):
+			for key, value in kwargs.items():
+				setattr(self, key, value)
 
-
-if '__main__'==__name__:
-	main()
+	if args.extract:
+		args = Blurb(
+			extract = True,
+			clone = False,
+			train = False,
+			export = False
+		)
+	else:
+		args = Blurb(
+			extract = True,
+			clone = True,
+			train = True,
+			export = True
+		)
+	main(args)

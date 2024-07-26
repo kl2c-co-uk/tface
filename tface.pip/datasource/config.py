@@ -4,8 +4,11 @@ from datasource import todo
 INPUT_SIZE = 640
 
 # small training limits for development time
+# how many items per dataset to extract
+LIMIT = 8
+
+# how many times to go over everything
 EPOCHS = 2
-LIMIT = 3
 
 
 BATCH_SIZE = 8 # small to fit in the k620
