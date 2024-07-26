@@ -1,4 +1,7 @@
 
+> 2024-07-26; ignore this - pal needs to remove it infavour of the [`yolo5.md`](yolo5.md) materials which are up to date
+
+----
 
 > 2024-07-04; this needs to be updated ... sorry
 
