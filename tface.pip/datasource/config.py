@@ -3,15 +3,18 @@ from datasource import todo
 
 INPUT_SIZE = 640
 
-EPOCHS = 40
+# small training limits for development time
+EPOCHS = 2
+LIMIT = 3
 
-BATCH_SIZE = 16
+
+BATCH_SIZE = 8 # small to fit in the k620
+# ... bigger sizes are probably fine there too ...
 # 16 = 3.68G
 # 12 = 3G?
 # ... bugger batches finish epochs faster, but, need more GPU memeory ...
 
 # limit how big the datasets are durring development
-LIMIT = 0
 
 """
 

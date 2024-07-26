@@ -15,7 +15,7 @@ So, since we want to detect human and cartoon faces; the attempt here is to
     - this should export to a `.onnx` file
 
 
-##
+## Setup / Training
 
 You'll need [MiniConda](https://docs.anaconda.com/miniconda/miniconda-install/) and the [CUDA ToolKit](https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exe_network) to use this, along with git.
 
@@ -34,14 +34,17 @@ conda create --prefix target/pytorch python=3.8
 
 conda activate target/pytorch
 
-conda install pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia
+conda install -y pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia
 
 pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt
+pip install -r yolo5.txt
 ```
 
 > the `target/` dir should be ignored by version control.  it gets really big. 
 
 After this running `python yolo5.py` will run the trianing thing.
+
+> once the environment is activated, you can do it all with `conda install -y pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia && pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt && pip install -r yolo5.txt && python yolo5.py`
 
 > When running the command in the futre, make sure to use `conda activate target/pytorch` to switch to the environment you just created.
 
