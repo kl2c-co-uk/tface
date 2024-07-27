@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Barracuda;
-using System.Drawing;
+using System.IO;
 
 
 public static class E
@@ -68,15 +68,29 @@ public class TensorScript : MonoBehaviour
             // Retrieve the output tensor (if needed)
             Tensor outputTensor = worker.PeekOutput();
 
-            Debug.Log(outputTensor);
-            Debug.Log(outputTensor);
-            Debug.Log(outputTensor);
+            using (StreamWriter writer = new StreamWriter("detekt.csv"))
+            {
+                writer.WriteLine("{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
 
-            var o0 = outputTensor[0, 0, 0, 0];
-            var o1 = outputTensor[0, 0, 0, 1];
+                // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
+                float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
 
-            cube1.enabled = !(0 >= ((int)o0));
-            cube2.enabled = !(0 >= ((int)o1));
+                int num_boxes = 25200 / 6; // 4200 boxes
+                for (int i = 0; i < num_boxes; i++)
+                {
+                    int baseIndex = i * 6;
+                    float x_center = data[baseIndex];
+                    float y_center = data[baseIndex + 1];
+                    float width = data[baseIndex + 2];
+                    float height = data[baseIndex + 3];
+                    float confidence_i_found_a_thing = data[baseIndex + 4];
+                    float confidence_its_a_face = data[baseIndex + 5]; // Assuming a single class or a score
+
+
+                    writer.WriteLine($"{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
+                }
+            }
+
 
             // Dispose of the input tensor to free resources
             inputTensor.Dispose();
