@@ -24,7 +24,7 @@ You'll need [MiniConda](https://docs.anaconda.com/miniconda/miniconda-install/) 
 > ... oh, you'll probably need an NVidia GPU (I think) but I've been able to run it with the K620s we have from iBit and a GTX 970 so "anything made after 2014" is probably fine if you're buying a new one ...
 > > It's likely that non-NVidia stuff will transparently "just work" 
 
-To use the Unity project, you need to install Unity 2021.3 (probably via [Unity Hub]() even though this isn't the default) to avoid constantly tweaking the version numbers
+To use the Unity project, you need to install Unity 2021.3 (just open it with [Unity Hub]() and install the version) to avoid constantly tweaking the version numbers.
 
 The following shell commands create a conda environment with the correct packages setup to run the training.
 

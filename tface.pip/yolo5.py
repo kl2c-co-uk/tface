@@ -112,11 +112,11 @@ def export(git):
 			"python", "export.py",
 			"--weights", str(weights),
 			"--img-size", str(config.INPUT_SIZE),
-			"--batch-size", str(config.BATCH_SIZE),
+			"--batch-size", str(config.EXPORT_BATCH_SIZE),
 			"--device", "cpu",  # or "cuda" for GPU
+								# ... pal doesn't think this matters ...
 
-			'--opset', '9',
-
+			'--opset', '9',	# unix's barracuda is OLD so use the old version
 
 			"--include", "onnx"  # specify the format to export
 		],

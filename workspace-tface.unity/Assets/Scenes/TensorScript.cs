@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Barracuda;
+using System.Drawing;
 
 
 public static class E
@@ -57,9 +58,9 @@ public class TensorScript : MonoBehaviour
         {
             // Convert the webcam texture to a Tensor
             Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
+
             Tensor inputTensor = new Tensor(inputTesorRenderTexture, channels: 3);
 
-            inputTensor.Reshape(new int[] { 1, 1, 2, 1, 3, 6, 160, 160 });
 
             // Execute the model with the input tensor
             worker.Execute(inputTensor);

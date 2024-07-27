@@ -7,6 +7,7 @@ INPUT_SIZE = 640
 # how many items per dataset to extract
 LIMIT = 8
 
+
 # how many times to go over everything
 EPOCHS = 2
 
@@ -17,7 +18,11 @@ BATCH_SIZE = 8 # small to fit in the k620
 # 12 = 3G?
 # ... bugger batches finish epochs faster, but, need more GPU memeory ...
 
-# limit how big the datasets are durring development
+
+# oh look; we can change the value for the export?
+EXPORT_BATCH_SIZE = 1
+
+
 
 """
 
