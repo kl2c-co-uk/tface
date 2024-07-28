@@ -212,7 +212,7 @@ def yolo5wider(cache, group, txt, url):
 						skipped += 1
 				if 0 != skipped:
 					
-					print(f'skipped {group} / {fKey} named {path} because {skipped} out of {len(faces)} faces were out of bounds')
+					print(f'skipped {group} / {fKey}\n\tnamed {path}\n\tbecause {skipped} out of {len(faces)} faces were out of bounds\n')
 					point_count -= 1
 				else:
 					# write the bytes

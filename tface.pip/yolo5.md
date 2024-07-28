@@ -48,6 +48,8 @@ After this running `python yolo5.py` will run the trianing thing.
 
 > When running the command in the futre, make sure to use `conda activate target/pytorch` to switch to the environment you just created.
 
+> train it for a long time and shutdown the PC `λ conda activate target/pytorch && python yolo5.py && shutdown /s /t 120`
+
 If you (or future me) want/need to edit the file, `yolov5.py` you might enjoy using `nodemon --ignore target/ yolo5.py` to auto-re-run the script whenever you save it.
 
 > I've been editing with [Visual Code](https://code.visualstudio.com/) please don't use NotePad - it's an exercise in self-harm at this point.
