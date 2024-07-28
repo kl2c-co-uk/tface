@@ -7,6 +7,7 @@ INPUT_SIZE = 640
 # how many items per dataset to extract
 LIMIT = 8
 
+SHOW_BBOX = True
 
 # how many times to go over everything
 EPOCHS = 2

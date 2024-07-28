@@ -194,8 +194,14 @@ def yolo5wider(cache, group, txt, url):
 				skipped = 0
 				for face in faces:
 					try:
-						x, y, w, h = face
+						l, t, w, h = face
 
+						w2 = (w * 0.5) / iw
+
+						# raise Exception(f'{face}     , w2 = {w2}')
+
+						x, y, w, h = face
+						
 						assert 0 <= x
 						assert (x+w) < iw, f'for `{group}` >{path}< iw = {iw} and x={x}, w={w}'
 						assert 0 <= y
@@ -211,18 +217,53 @@ def yolo5wider(cache, group, txt, url):
 					except AssertionError as e:
 						skipped += 1
 				if 0 != skipped:
-					
 					print(f'skipped {group} / {fKey}\n\tnamed {path}\n\tbecause {skipped} out of {len(faces)} faces were out of bounds\n')
 					point_count -= 1
 				else:
+					# write teh bounding box
+					if config.SHOW_BBOX:
+						from PIL import Image, ImageDraw
+						import io
+
+						image = Image.open(io.BytesIO(data))
+						draw = ImageDraw.Draw(image)
+
+						for label in labels:
+							x, y, w, h = map(float, label.split()[1:])
+
+							x *= image.size[0]
+							y *= image.size[1]
+							w *= image.size[0]
+							h *= image.size[1]
+
+							w /= 2
+							h /= 2
+
+							l = x - w
+							r = x + w
+							t = y - h
+							b = y + h
+
+							rectangle_coords = (int(l),int(t), int(r),int(b))
+
+							draw.rectangle(rectangle_coords, outline="red", width=5)
+
+						image.show()
+						raise Exception('save the image')
+						#jpg = f'target/yolo-dataset/images/{group}/{fKey}.jpg'
+
 					# write the bytes
 					with open(jpg, 'wb') as file:
 						file.write(data)
+					
 					# write the labels
 					with open(txt, 'w') as file:
 						for label in labels:
 							file.write(label)
 							file.write('\n')
+					
+
+
 
 	print(f'prepared dataset >{group}< of {point_count} points (or more!)')
 
