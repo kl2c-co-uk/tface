@@ -183,12 +183,49 @@ def yolo5wider(cache, group, txt, url):
 				import cv2
 				import numpy as np 
 
-				iw, ih, _ = cv2.imdecode(
+				# get the image dimenions - IIRC this was faster than PIL
+				# ... note the h,w ordering ... not my idea
+				ih, iw, _ = cv2.imdecode(
 					np.frombuffer(data, dtype=np.uint8),
 					cv2.IMREAD_COLOR).shape
 				
 				dw = 1.0 / float(iw)
 				dh = 1.0 / float(ih)
+
+				
+						
+				from PIL import Image, ImageDraw
+				import io
+
+				def yolo5_to_pil(coords):
+					"""convert the yolo5 data to the coordinates"""
+
+					x, y, w, h = coords
+					
+					x = x - (0.5 * w)
+					y = y - (0.5 * h)
+
+					w = int(w * iw)
+					h = int(h * ih)
+
+					x = int(x * iw)
+					y = int(y * ih)
+
+					return(x, y, x+w, y+h)
+
+				def pil_to_yolo5(coords):
+					"""convert the pil-draw to yolo5 coordiantes"""
+
+					l, t, r, b = coords
+
+					w = (r - l)
+					w *= dw
+					h = (b - t) * dh
+
+					x = (l + r) * dw * 0.5
+					y = (t + b) * dh * 0.5
+
+					return(x, y, w, h)
 
 				labels = []
 				skipped = 0
@@ -196,65 +233,21 @@ def yolo5wider(cache, group, txt, url):
 					try:
 						l, t, w, h = face
 
-						def yolo5drawCoords(yx, yy, yw, yh):
-							"""conver teh yolo5 data to the pilDraw coordinates"""
 
-						# show the face right now
-						from PIL import Image, ImageDraw
-						import io
-						image = Image.open(io.BytesIO(data))
-						draw = ImageDraw.Draw(image)
-						rectangle_coords = (int(l),int(t), int(l+w),int(t+h))
-						draw.rectangle(rectangle_coords, outline="red", width=5)
-						image.show()
-						raise Exception('did the image show it correctly?')
+						yolo5_coords = pil_to_yolo5( (int(l), int(t), int(l+w), int(t+h)) )
 
-
-
-						raise Exception('??? now adapt tot he yolo5 dataset format')
-
-
-
-						# for label in labels:
-						# 	x, y, w, h = map(float, label.split()[1:])
-
-						# 	x *= image.size[0]
-						# 	y *= image.size[1]
-						# 	w *= image.size[0]
-						# 	h *= image.size[1]
-
-						# 	w /= 2
-						# 	h /= 2
-
-						# 	l = x - w
-						# 	r = x + w
-						# 	t = y - h
-						# 	b = y + h
-
-						# 	rectangle_coords = (int(l),int(t), int(r),int(b))
-						# 	draw.rectangle(rectangle_coords, outline="red", width=5)
+						# pil_coords = yolo5_to_pil( yolo5_coords )
+						# # show the face right now
+						# image = Image.open(io.BytesIO(data))
+						# draw = ImageDraw.Draw(image)
+						# rectangle_coords = pil_coords # (int(l),int(t), int(l+w),int(t+h))
+						# draw.rectangle(rectangle_coords, outline="red", width=5)
+						# image.show()
 
 
 
 
-
-						w2 = (w * 0.5) / iw
-
-						# raise Exception(f'{face}     , w2 = {w2}')
-
-						x, y, w, h = face
-						
-						assert 0 <= x
-						assert (x+w) < iw, f'for `{group}` >{path}< iw = {iw} and x={x}, w={w}'
-						assert 0 <= y
-						assert (y+h) < ih
-
-						x = (x + (w/2)) * dw
-						w *= dw
-
-						y = (y + (h/2)) * dh
-						h *= dh
-
+						x, y, w, h = yolo5_coords
 						labels.append(f'0 {x} {y} {w} {h}')
 					except AssertionError as e:
 						skipped += 1
@@ -263,7 +256,7 @@ def yolo5wider(cache, group, txt, url):
 					point_count -= 1
 				else:
 					# write teh bounding box
-					if config.SHOW_BBOX:
+					if False:
 						from PIL import Image, ImageDraw
 						import io
 
