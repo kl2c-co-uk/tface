@@ -13,7 +13,7 @@ assert(torch.cuda.is_available())
 
 def main(args):
 
-	os.makedirs('target/yolo-dataset/', exist_ok=True)
+	os.makedirs(f'target/yolo-dataset_{config.LIMIT}/', exist_ok=True)
 
 	cache = Cache('target/')
 
@@ -67,8 +67,8 @@ def train(git):
 		import textwrap
 		file.write(
 			textwrap.dedent(f"""\
-				train: {os.path.abspath('target/yolo-dataset/images/train')}
-				val: {os.path.abspath('target/yolo-dataset/images/val')}
+				train: {os.path.abspath(f'target/yolo-dataset_{config.LIMIT}/images/train')}
+				val: {os.path.abspath(f'target/yolo-dataset_{config.LIMIT}/images/val')}
 				nc: 1  # number of classes
 				names:
 				- face
@@ -170,8 +170,8 @@ def yolo5wider(cache, group, txt, url):
 
 			fKey = md5(path)
 
-			jpg = f'target/yolo-dataset/images/{group}/{fKey}.jpg'
-			txt = f'target/yolo-dataset/labels/{group}/{fKey}.txt'
+			jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
+			txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
 
 			if os.path.isfile(jpg) and os.path.isfile(txt):
 				continue
@@ -285,7 +285,7 @@ def yolo5wider(cache, group, txt, url):
 
 						image.show()
 						raise Exception('save the image')
-						#jpg = f'target/yolo-dataset/images/{group}/{fKey}.jpg'
+						#jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
 
 					# write the bytes
 					with open(jpg, 'wb') as file:

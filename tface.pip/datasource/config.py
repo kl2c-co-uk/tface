@@ -5,7 +5,7 @@ INPUT_SIZE = 640
 
 # small training limits for development time
 # how many items per dataset to extract
-LIMIT = 8
+LIMIT = 0
 
 # how many times to go over everything
 EPOCHS = 2
