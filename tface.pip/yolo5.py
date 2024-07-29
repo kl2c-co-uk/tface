@@ -196,6 +196,48 @@ def yolo5wider(cache, group, txt, url):
 					try:
 						l, t, w, h = face
 
+						def yolo5drawCoords(yx, yy, yw, yh):
+							"""conver teh yolo5 data to the pilDraw coordinates"""
+
+						# show the face right now
+						from PIL import Image, ImageDraw
+						import io
+						image = Image.open(io.BytesIO(data))
+						draw = ImageDraw.Draw(image)
+						rectangle_coords = (int(l),int(t), int(l+w),int(t+h))
+						draw.rectangle(rectangle_coords, outline="red", width=5)
+						image.show()
+						raise Exception('did the image show it correctly?')
+
+
+
+						raise Exception('??? now adapt tot he yolo5 dataset format')
+
+
+
+						# for label in labels:
+						# 	x, y, w, h = map(float, label.split()[1:])
+
+						# 	x *= image.size[0]
+						# 	y *= image.size[1]
+						# 	w *= image.size[0]
+						# 	h *= image.size[1]
+
+						# 	w /= 2
+						# 	h /= 2
+
+						# 	l = x - w
+						# 	r = x + w
+						# 	t = y - h
+						# 	b = y + h
+
+						# 	rectangle_coords = (int(l),int(t), int(r),int(b))
+						# 	draw.rectangle(rectangle_coords, outline="red", width=5)
+
+
+
+
+
 						w2 = (w * 0.5) / iw
 
 						# raise Exception(f'{face}     , w2 = {w2}')
