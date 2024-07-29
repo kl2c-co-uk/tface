@@ -8,10 +8,10 @@ INPUT_SIZE = 640
 LIMIT = 0
 
 # how many times to go over everything
-EPOCHS = 2
+EPOCHS = 20
 
 
-BATCH_SIZE = 8 # small to fit in the k620
+BATCH_SIZE = 4 # small to fit in the k620
 # ... bigger sizes are probably fine there too ...
 # 16 = 3.68G
 # 12 = 3G?
