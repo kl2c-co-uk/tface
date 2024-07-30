@@ -5,7 +5,7 @@
 import os, shutil
 
 import datasource.config as config
-from datasource import Cache, md5, ZipWalk, ensure_directory_exists
+from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists
 import subprocess
 
 import torch
@@ -34,7 +34,7 @@ def main(args):
 		git = yolo5clone()
 
 		if args.train:
-			train(git)
+			train(args, git)
 
 		if args.export:
 			export(git)
@@ -59,7 +59,9 @@ def yolo5clone():
 			print("Error cloning YOLOv5 project:", result.stderr)
 	return git
 
-def train(git):
+def train(args, git):
+
+
 	##
 	# write the/a yaml
 	yaml = os.path.abspath('target/yolo5.yaml')
@@ -75,17 +77,17 @@ def train(git):
 			""")
 		)
 
-
+	weights = args.weights or 'yolov5s.pt'
 	##
 	# train it?
-	print('launching the training ...')
+	print(f'launching the training from {weights} ...')
 	result = subprocess.run([
 			'python', 'train.py',
 			'--img', str(config.INPUT_SIZE),
 			'--batch', str(config.BATCH_SIZE),
 			'--epochs', str(config.EPOCHS),
 			'--data', yaml,
-			'--weights','yolov5s.pt'
+			'--weights', weights
 		],
 		cwd=git,
 		# capture_output=True,
@@ -192,62 +194,29 @@ def yolo5wider(cache, group, txt, url):
 				dw = 1.0 / float(iw)
 				dh = 1.0 / float(ih)
 
-				
-						
-				from PIL import Image, ImageDraw
-				import io
-
-				def yolo5_to_pil(coords):
-					"""convert the yolo5 data to the coordinates"""
-
-					x, y, w, h = coords
-					
-					x = x - (0.5 * w)
-					y = y - (0.5 * h)
-
-					w = int(w * iw)
-					h = int(h * ih)
-
-					x = int(x * iw)
-					y = int(y * ih)
-
-					return(x, y, x+w, y+h)
-
-				def pil_to_yolo5(coords):
-					"""convert the pil-draw to yolo5 coordiantes"""
-
-					l, t, r, b = coords
-
-					w = (r - l)
-					w *= dw
-					h = (b - t) * dh
-
-					x = (l + r) * dw * 0.5
-					y = (t + b) * dh * 0.5
-
-					return(x, y, w, h)
-
 				labels = []
 				skipped = 0
 				for face in faces:
 					try:
 						l, t, w, h = face
 
+						def pil_to_yolo5(coords):
+							"""convert the pil-draw to yolo5 coordiantes"""
 
-						yolo5_coords = pil_to_yolo5( (int(l), int(t), int(l+w), int(t+h)) )
+							l, t, r, b = coords
 
-						# pil_coords = yolo5_to_pil( yolo5_coords )
-						# # show the face right now
-						# image = Image.open(io.BytesIO(data))
-						# draw = ImageDraw.Draw(image)
-						# rectangle_coords = pil_coords # (int(l),int(t), int(l+w),int(t+h))
-						# draw.rectangle(rectangle_coords, outline="red", width=5)
-						# image.show()
+							w = (r - l)
+							w *= dw
+							h = (b - t) * dh
 
+							x = (l + r) * dw * 0.5
+							y = (t + b) * dh * 0.5
 
+							return(x, y, w, h)
 
-
-						x, y, w, h = yolo5_coords
+						# there may be redundant computation here
+						x, y, w, h = pil_to_yolo5( (int(l), int(t), int(l+w), int(t+h)) )
+						
 						labels.append(f'0 {x} {y} {w} {h}')
 					except AssertionError as e:
 						skipped += 1
@@ -255,38 +224,6 @@ def yolo5wider(cache, group, txt, url):
 					print(f'skipped {group} / {fKey}\n\tnamed {path}\n\tbecause {skipped} out of {len(faces)} faces were out of bounds\n')
 					point_count -= 1
 				else:
-					# write teh bounding box
-					if False:
-						from PIL import Image, ImageDraw
-						import io
-
-						image = Image.open(io.BytesIO(data))
-						draw = ImageDraw.Draw(image)
-
-						for label in labels:
-							x, y, w, h = map(float, label.split()[1:])
-
-							x *= image.size[0]
-							y *= image.size[1]
-							w *= image.size[0]
-							h *= image.size[1]
-
-							w /= 2
-							h /= 2
-
-							l = x - w
-							r = x + w
-							t = y - h
-							b = y + h
-
-							rectangle_coords = (int(l),int(t), int(r),int(b))
-
-							draw.rectangle(rectangle_coords, outline="red", width=5)
-
-						image.show()
-						raise Exception('save the image')
-						#jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
-
 					# write the bytes
 					with open(jpg, 'wb') as file:
 						file.write(data)
@@ -341,15 +278,31 @@ if '__main__' == __name__:
 	import argparse
 	parser = argparse.ArgumentParser(description="YOLOv5 Face Detector (maybe)")
 	parser.add_argument('-extract', action='store_true', help='only do the extraction step')
+
+	parser.add_argument('--weights', type=str, help='Path to the .pt file i should resume/start from')
+
 	args = parser.parse_args()
 
-	class Blurb:
-		def __init__(self, **kwargs):
-			for key, value in kwargs.items():
-				setattr(self, key, value)
+	##
+	# check the resume paramter
+	if not args.weights:
+		print('training from scratch (i.e. the stock weights file)')
+	else:
+		# nodemon --ignore target/ yolo5.py --weights "G:/My Drive/kl2c/best.pt"
+
+		if os.path.isfile(args.weights):
+			was = args.weights
+			args.weights = args.weights.replace('\\','/')
+			args.weights = os.path.abspath(args.weights)
+			args.weights = args.weights.replace('\\','/')
+
+			print(f"resuming/retraining from `{args.weights}`")
+			if args.weights != was:
+				print(f"  (... which was {was})")
 
 	if args.extract:
 		args = Blurb(
+			weights = args.weights,
 			extract = True,
 			clone = False,
 			train = False,
@@ -357,6 +310,7 @@ if '__main__' == __name__:
 		)
 	else:
 		args = Blurb(
+			weights = args.weights,
 			extract = True,
 			clone = True,
 			train = True,

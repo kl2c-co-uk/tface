@@ -11,7 +11,7 @@ LIMIT = 0
 EPOCHS = 20
 
 
-BATCH_SIZE = 4 # small to fit in the k620
+BATCH_SIZE = 6 # small to fit in the k620
 # ... bigger sizes are probably fine there too ...
 # 16 = 3.68G
 # 12 = 3G?

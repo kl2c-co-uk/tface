@@ -66,6 +66,19 @@ If you (or future me) want/need to edit the file, `yolov5.py` you might enjoy us
 
 
 
+last round was interupted by windows update
+
+i want a "retrain" option which points to a `.pt` file for this (and other) occaisions
+
+
+
+
+
+
+
+
+
+
 https://blog.paperspace.com/train-yolov5-custom-data/
 https://chatgpt.com/c/42665fa1-7076-4ad4-9e8e-c87a27eb5a53
 

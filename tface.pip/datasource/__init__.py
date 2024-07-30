@@ -76,6 +76,11 @@ def ensure_directory_exists(file_path):
 		os.makedirs(directory)
 	return directory
 		
+class Blurb:
+	def __init__(self, **kwargs):
+		for key, value in kwargs.items():
+			setattr(self, key, value)
+
 
 class Cache():
 	def __init__(self, target):
