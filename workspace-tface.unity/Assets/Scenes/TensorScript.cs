@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Barracuda;
 using System.IO;
+using System.Drawing;
 
 
 public static class E
@@ -47,11 +48,18 @@ public class TensorScript : MonoBehaviour
 
     public WebcamDisplay webcamDisplay;
     public RenderTexture inputTesorRenderTexture;
+
+
+    [UnityEngine.Range(0, 1)]
+    public float DetectionThreshold = 0.3f;
+    [UnityEngine.Range(0, 1)]
+    public float NmsThreshold = 0.5f;
+    [UnityEngine.Range(0, 1)]
+    public float ConfidenceThreshold = 0.4f;
+
+
     void Update()
     {
-
-
-#if true
         var webcamTexture = webcamDisplay.webcamTexture;
         // Check if the webcam has provided new data
         if (webcamTexture.didUpdateThisFrame)
@@ -65,15 +73,16 @@ public class TensorScript : MonoBehaviour
             // Execute the model with the input tensor
             worker.Execute(inputTensor);
 
-            // Retrieve the output tensor (if needed)
+            // Retrieve the output tensor
             Tensor outputTensor = worker.PeekOutput();
+
+            // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
+            float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
+
 
             using (StreamWriter writer = new StreamWriter("detekt.csv"))
             {
                 writer.WriteLine("{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
-
-                // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
-                float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
 
                 int num_boxes = 25200 / 6; // 4200 boxes
                 for (int i = 0; i < num_boxes; i++)
@@ -91,53 +100,133 @@ public class TensorScript : MonoBehaviour
                 }
             }
 
+            using (StreamWriter writer = new StreamWriter("face_onnx_way.csv"))
+            {
+
+                // https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L108
+
+
+                var Labels = new string[] { "face" };
+                var size = new Size(640, 640);
+                var width = size.Width; //  image[0].GetLength(1);
+                var height = size.Height; //  image[0].GetLength(0);
+
+                // yolo params
+                var yoloSquare = 15;
+                var classes = Labels.Length;
+                var count = classes + yoloSquare;
+
+                // post-processing
+                var vector = data; // results[0].AsTensor<float>().ToArray();
+                var length = vector.Length / count;
+                var predictions = new float[length][];
+
+                for (int i = 0; i < length; i++)
+                {
+                    var prediction = new float[count];
+
+                    for (int j = 0; j < count; j++)
+                        prediction[j] = vector[i * count + j];
+
+                    predictions[i] = prediction;
+                }
+
+                var list = new List<float[]>();
+
+                // seivining results
+                for (int i = 0; i < length; i++)
+                {
+                    var prediction = predictions[i];
+
+                    if (prediction[4] > DetectionThreshold)
+                    {
+                        var a = prediction[0];
+                        var b = prediction[1];
+                        var c = prediction[2];
+                        var d = prediction[3];
+
+                        prediction[0] = a - c / 2;
+                        prediction[1] = b - d / 2;
+                        prediction[2] = a + c / 2;
+                        prediction[3] = b + d / 2;
+
+                        //for (int j = yoloSquare; j < prediction.Length; j++)
+                        //{
+                        //    prediction[j] *= prediction[4];
+                        //}
+
+                        list.Add(prediction);
+                    }
+                }
+
+                // non-max suppression
+                list = FaceONNX.NonMaxSuppressionExensions.AgnosticNMSFiltration(list, NmsThreshold);
+
+                // perform
+                predictions = list.ToArray();
+                length = predictions.Length;
+
+                // backward transform
+                var k0 = (float)size.Width / width;
+                var k1 = (float)size.Height / height;
+                float gain = Mathf.Min(k0, k1);
+                float p0 = (size.Width - width * gain) / 2;
+                float p1 = (size.Height - height * gain) / 2;
+
+                // collect results
+                var detectionResults = new List<FaceONNX.FaceDetectionResult>();
+
+                for (int i = 0; i < length; i++)
+                {
+                    var prediction = predictions[i];
+                    var labels = new float[classes];
+
+                    for (int j = 0; j < classes; j++)
+                    {
+                        labels[j] = prediction[j + yoloSquare];
+                    }
+
+                    var max = UMapx.Core.Matrice.Max(labels, out int argmax);
+
+                    if (max > ConfidenceThreshold)
+                    {
+                        var rectangle = Rectangle.FromLTRB(
+                            (int)((prediction[0] - p0) / gain),
+                            (int)((prediction[1] - p1) / gain),
+                            (int)((prediction[2] - p0) / gain),
+                            (int)((prediction[3] - p1) / gain));
+
+                        var points = new Point[5];
+
+                        for (int j = 0; j < 5; j++)
+                        {
+                            points[j] = new Point
+                            {
+                                X = (int)((prediction[5 + 2 * j + 0] - p0) / gain),
+                                Y = (int)((prediction[5 + 2 * j + 1] - p1) / gain)
+                            };
+                        }
+
+                        var landmarks = new FaceONNX.Face5Landmarks(points);
+
+                        detectionResults.Add(new FaceONNX.FaceDetectionResult
+                        {
+                            Rectangle = rectangle,
+                            Id = argmax,
+                            Score = max,
+                            Points = landmarks
+                        });
+                    }
+                }
+
+                Debug.Log("found " + detectionResults.Count + " faces");
+            }
+
 
             // Dispose of the input tensor to free resources
             inputTensor.Dispose();
             outputTensor.Dispose();
         }
-#else
-
-        Debug.Assert(1 == runtimeModel.inputs.Count); // i can assume trhis?
-
-        var batchSize = runtimeModel.inputs[0].shape[4];
-        var width = runtimeModel.inputs[0].shape[5];
-        var height = runtimeModel.inputs[0].shape[6];
-        var channels = runtimeModel.inputs[0].shape[7];
-
-        Debug.Assert(1 == batchSize);
-        Debug.Assert(3 == channels);
-
-        // create a tensor
-        Tensor inputTensor = new Tensor(1, height, width, channels);
-
-        // fill it with garbatge
-        //foreach (var c in channels.Range())
-        //    foreach (var w in width.Range())
-        //        foreach (var h in height.Range())
-        //            inputTensor[0, c, w, h] = Random.value;
-
-
-        // Execute the model
-        worker.Execute(inputTensor);
-
-        // Get the output
-        Tensor outputTensor = worker.PeekOutput();
-
-        //Debug.Log("outputTensor.batch = " + outputTensor.batch);
-        //Debug.Log("outputTensor.channels = " + outputTensor.channels);
-        //Debug.Log("outputTensor.width = " + outputTensor.width);
-        //Debug.Log("outputTensor.height = " + outputTensor.height);
-
-        var o0 = outputTensor[0, 0, 0, 0];
-        var o1 = outputTensor[0, 0, 0, 1];
-
-        cube1.enabled = !(0 >= ((int)o0));
-        cube2.enabled = !(0 >= ((int)o1));
-
-        inputTensor.Dispose();
-        outputTensor.Dispose();
-#endif
     }
     private void OnDestroy()
     {

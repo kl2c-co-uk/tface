@@ -8,7 +8,7 @@ INPUT_SIZE = 640
 LIMIT = 0
 
 # how many times to go over everything
-EPOCHS = 20
+EPOCHS = 1
 
 
 BATCH_SIZE = 6 # small to fit in the k620
