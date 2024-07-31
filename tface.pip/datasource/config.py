@@ -1,17 +1,33 @@
 
 from datasource import todo
 
-INPUT_SIZE = 640
+INPUT_SIZE = 160 # small to make training fast
 
 # small training limits for development time
 # how many items per dataset to extract
 LIMIT = 0
 
 # how many times to go over everything
-EPOCHS = 1
+EPOCHS = 40 # this was teh recomended
 
 
-BATCH_SIZE = 6 # small to fit in the k620
+
+# with input == 160, size=6 = 0.304 G and quick!
+# with input == 160, size=12 = 0.388 G and quick!
+# with input == 160, size=40 = 0.927 G and ... ticks
+
+
+# with input == 160, size=80 = 1.69 G and it "ticks" past
+# with input == 160, size=85 = 1.78 G and it "ticks" past
+
+
+BATCH_SIZE = 85
+
+
+# small enough to fit in the k620
+
+
+
 # ... bigger sizes are probably fine there too ...
 # 16 = 3.68G
 # 12 = 3G?

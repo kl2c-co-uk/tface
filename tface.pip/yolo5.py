@@ -286,7 +286,7 @@ if '__main__' == __name__:
 	##
 	# check the resume paramter
 	if not args.weights:
-		print('training from scratch (i.e. the stock weights file)')
+		print('training from scratch')
 	else:
 		# nodemon --ignore target/ yolo5.py --weights "G:/My Drive/kl2c/best.pt"
 
