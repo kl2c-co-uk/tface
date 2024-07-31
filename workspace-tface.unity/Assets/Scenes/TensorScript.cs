@@ -5,6 +5,8 @@ using UnityEngine;
 using Unity.Barracuda;
 using System.IO;
 using System.Drawing;
+using System.Net.WebSockets;
+using System.Linq;
 
 
 public static class E
@@ -21,6 +23,12 @@ public static class E
     {
         foreach (var e in i)
             f(e);
+    }
+
+    public static IEnumerable<O> Each<I, O>(this IEnumerable<I> i, System.Func<I, O> f)
+    {
+        foreach (var e in i)
+            yield return f(e);
     }
 }
 
@@ -44,10 +52,43 @@ public class TensorScript : MonoBehaviour
         runtimeModel = ModelLoader.Load(modelAsset);
         worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
+
+        // check the model size
+        Debug.Assert(1 == runtimeModel.inputs.Count);
+
+        Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
+
+        // Check the number of inputs and their shapes
+        foreach (var input in runtimeModel.inputs)
+        {
+            Debug.Log($"Input name: {input.name}");
+            Debug.Log($"Input shape: {input.shape.ToString()}");
+
+            // Print each dimension of the input tensor
+            for (int i = 0; i < input.shape.Length; i++)
+            {
+                Debug.Log($"Dimension {i}: {input.shape[i]}");
+            }
+        }
+
+        // these should be 1
+        for (int i = 0; i < 5; ++i)
+            Debug.Assert(1 == runtimeModel.inputs[0].shape[i]);
+
+        var height = runtimeModel.inputs[0].shape[5];
+        var width = runtimeModel.inputs[0].shape[6];
+
+        Debug.Assert(3 == runtimeModel.inputs[0].shape[7]);
+
+
+        //
+        //
+        inputTesorRenderTexture = new RenderTexture(width, height, 0);
     }
 
     public WebcamDisplay webcamDisplay;
-    public RenderTexture inputTesorRenderTexture;
+    private RenderTexture inputTesorRenderTexture;
+    public Texture2D outputTexture2D;
 
 
     [UnityEngine.Range(0, 1)]
@@ -56,7 +97,6 @@ public class TensorScript : MonoBehaviour
     public float NmsThreshold = 0.5f;
     [UnityEngine.Range(0, 1)]
     public float ConfidenceThreshold = 0.4f;
-
 
     void Update()
     {
@@ -76,16 +116,19 @@ public class TensorScript : MonoBehaviour
             // Retrieve the output tensor
             Tensor outputTensor = worker.PeekOutput();
 
+
+
             // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
             float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
 
+            // is this wrong?
+            Debug.Assert((25200 * 6) == data.Length);
 
             using (StreamWriter writer = new StreamWriter("detekt.csv"))
             {
                 writer.WriteLine("{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
 
-                int num_boxes = 25200 / 6; // 4200 boxes
-                for (int i = 0; i < num_boxes; i++)
+                for (int i = 0; i < 25200; i++)
                 {
                     int baseIndex = i * 6;
                     float x_center = data[baseIndex];
@@ -102,12 +145,13 @@ public class TensorScript : MonoBehaviour
 
             using (StreamWriter writer = new StreamWriter("face_onnx_way.csv"))
             {
+                writer.Write("{rectangle.Left}, {rectangle.Top}, {rectangle.Right}, {rectangle.Top},\n");
 
                 // https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L108
 
 
                 var Labels = new string[] { "face" };
-                var size = new Size(640, 640);
+                var size = new Size(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
                 var width = size.Width; //  image[0].GetLength(1);
                 var height = size.Height; //  image[0].GetLength(0);
 
@@ -209,6 +253,8 @@ public class TensorScript : MonoBehaviour
 
                         var landmarks = new FaceONNX.Face5Landmarks(points);
 
+                        writer.Write($"{rectangle.Left}, {rectangle.Top}, {rectangle.Right}, {rectangle.Top},\n");
+
                         detectionResults.Add(new FaceONNX.FaceDetectionResult
                         {
                             Rectangle = rectangle,
@@ -220,6 +266,47 @@ public class TensorScript : MonoBehaviour
                 }
 
                 Debug.Log("found " + detectionResults.Count + " faces");
+
+                {
+                    // clear the output tteure
+                    {
+                        if (null == outputTexture2D)
+                            outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
+
+
+                        outputTexture2D.SetPixels(new UnityEngine.Color[outputTexture2D.width * outputTexture2D.height].Each(_ => UnityEngine.Color.black).ToArray());
+                    }
+
+                    var colours = new UnityEngine.Color[]
+                    {
+                        UnityEngine.Color.blue,
+                        UnityEngine.Color.cyan,
+                        UnityEngine.Color.gray,
+                        UnityEngine.Color.green,
+                        UnityEngine.Color.grey,
+                        UnityEngine.Color.magenta,
+                        UnityEngine.Color.red,
+                        UnityEngine.Color.white,
+                        UnityEngine.Color.yellow,
+                    };
+
+                    var random = new System.Random(Seed: detectionResults.Count);
+
+                    // our old thing was just the Rect for some reason
+                    foreach (var rect in detectionResults.Each(_ => _.Rectangle))
+                    {
+                        var colour = colours[random.Next(0, colours.Length)];
+                        for (int x = rect.Left; x < rect.Right; ++x)
+                        {
+                            for (int y = rect.Top; y < rect.Bottom; ++y)
+                            {
+                                outputTexture2D.SetPixel(x, y, colour);
+                            }
+                        }
+                    }
+
+                    outputTexture2D.Apply();
+                }
             }
 
 
@@ -228,6 +315,8 @@ public class TensorScript : MonoBehaviour
             outputTensor.Dispose();
         }
     }
+
+    public Material outputMaterial;
     private void OnDestroy()
     {
         worker?.Dispose();
