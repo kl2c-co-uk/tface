@@ -1,17 +1,25 @@
 
 from datasource import todo
 
-INPUT_SIZE = 640
+INPUT_SIZE = 160 # small to make training fast
 
 # small training limits for development time
 # how many items per dataset to extract
 LIMIT = 0
 
 # how many times to go over everything
-EPOCHS = 1
+EPOCHS = 40 # this was teh recomended
 
 
-BATCH_SIZE = 6 # small to fit in the k620
+
+# RTFM; -1 batch size handles it automatically
+BATCH_SIZE = -1
+
+
+# small enough to fit in the k620
+
+
+
 # ... bigger sizes are probably fine there too ...
 # 16 = 3.68G
 # 12 = 3G?
