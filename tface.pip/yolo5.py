@@ -98,7 +98,7 @@ def train(args, git):
 	if result.returncode == 0:
 		print("... yolo5 trained successfully.")
 	else:
-		print("Error training YOLOv5 project:", result.stderr)
+		raise Exception("Error training YOLOv5 project:", result.stderr)
 
 def export(git):
 	##
