@@ -8,7 +8,6 @@ using System.Drawing;
 using System.Net.WebSockets;
 using System.Linq;
 
-
 public static class E
 {
     public static int[] Range(this int i)
@@ -58,19 +57,6 @@ public class TensorScript : MonoBehaviour
 
         Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
 
-        // Check the number of inputs and their shapes
-        foreach (var input in runtimeModel.inputs)
-        {
-            Debug.Log($"Input name: {input.name}");
-            Debug.Log($"Input shape: {input.shape.ToString()}");
-
-            // Print each dimension of the input tensor
-            for (int i = 0; i < input.shape.Length; i++)
-            {
-                Debug.Log($"Dimension {i}: {input.shape[i]}");
-            }
-        }
-
         // these should be 1
         for (int i = 0; i < 5; ++i)
             Debug.Assert(1 == runtimeModel.inputs[0].shape[i]);
@@ -116,32 +102,39 @@ public class TensorScript : MonoBehaviour
             // Retrieve the output tensor
             Tensor outputTensor = worker.PeekOutput();
 
+            string sss = "(";
+            outputTensor.shape.ToArray().Each(_ => sss + ", " + _);
+
+            Debug.Log("shape = " + sss + ")");
 
 
             // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
             float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
 
             // is this wrong?
-            Debug.Assert((25200 * 6) == data.Length);
+            // ... well ... then it's probably fine anyway
 
-            using (StreamWriter writer = new StreamWriter("detekt.csv"))
-            {
-                writer.WriteLine("{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
+            //int count = data.Length / 6;
+            //Debug.Assert((25200 * 6) == data.Length);
 
-                for (int i = 0; i < 25200; i++)
-                {
-                    int baseIndex = i * 6;
-                    float x_center = data[baseIndex];
-                    float y_center = data[baseIndex + 1];
-                    float width = data[baseIndex + 2];
-                    float height = data[baseIndex + 3];
-                    float confidence_i_found_a_thing = data[baseIndex + 4];
-                    float confidence_its_a_face = data[baseIndex + 5]; // Assuming a single class or a score
+            //using (StreamWriter writer = new StreamWriter("detekt.csv"))
+            //{
+            //    writer.WriteLine("{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
+
+            //    for (int i = 0; i < 25200; i++)
+            //    {
+            //        int baseIndex = i * 6;
+            //        float x_center = data[baseIndex];
+            //        float y_center = data[baseIndex + 1];
+            //        float width = data[baseIndex + 2];
+            //        float height = data[baseIndex + 3];
+            //        float confidence_i_found_a_thing = data[baseIndex + 4];
+            //        float confidence_its_a_face = data[baseIndex + 5]; // Assuming a single class or a score
 
 
-                    writer.WriteLine($"{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
-                }
-            }
+            //        writer.WriteLine($"{i}, {x_center}, {y_center}, {width}, {height}, {confidence_i_found_a_thing}, {confidence_its_a_face},");
+            //    }
+            //}
 
             using (StreamWriter writer = new StreamWriter("face_onnx_way.csv"))
             {
