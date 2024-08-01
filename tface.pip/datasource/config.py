@@ -12,16 +12,8 @@ EPOCHS = 40 # this was teh recomended
 
 
 
-# with input == 160, size=6 = 0.304 G and quick!
-# with input == 160, size=12 = 0.388 G and quick!
-# with input == 160, size=40 = 0.927 G and ... ticks
-
-
-# with input == 160, size=80 = 1.69 G and it "ticks" past
-# with input == 160, size=85 = 1.78 G and it "ticks" past
-
-
-BATCH_SIZE = 85
+# RTFM; -1 batch size handles it automatically
+BATCH_SIZE = -1
 
 
 # small enough to fit in the k620
