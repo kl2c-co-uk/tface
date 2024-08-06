@@ -7,12 +7,11 @@ using System.IO;
 using System.Drawing;
 using System.Net.WebSockets;
 using System.Linq;
+using kl2c;
 
 public class TensorScript : MonoBehaviour
 {
     public NNModel modelAsset;
-    private Model runtimeModel;
-    private IWorker worker;
 
     public SpinCube cube1;
     public SpinCube cube2;
@@ -24,27 +23,11 @@ public class TensorScript : MonoBehaviour
             return;
         }
 
-        // Create a runtime model
-        runtimeModel = ModelLoader.Load(modelAsset);
-        worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
+        yoloPipe = new kl2c.YoloPipe(modelAsset);
 
+        var height = yoloPipe.runtimeModel.inputs[0].shape[5];
+        var width = yoloPipe.runtimeModel.inputs[0].shape[6];
 
-        // check the model size
-        Debug.Assert(1 == runtimeModel.inputs.Count);
-        Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
-
-        // these should be 1
-        for (int i = 0; i < 5; ++i)
-            Debug.Assert(1 == runtimeModel.inputs[0].shape[i]);
-
-        var height = runtimeModel.inputs[0].shape[5];
-        var width = runtimeModel.inputs[0].shape[6];
-
-        Debug.Assert(3 == runtimeModel.inputs[0].shape[7]);
-
-
-        //
-        //
         inputTesorRenderTexture = new RenderTexture(width, height, 0);
     }
 
@@ -60,71 +43,37 @@ public class TensorScript : MonoBehaviour
     [UnityEngine.Range(0, 1)]
     public float ConfidenceThreshold = 0.4f;
 
+    public Material outputMaterial;
+    private kl2c.YoloPipe yoloPipe;
 
     void Update()
     {
         var webcamTexture = webcamDisplay.webcamTexture;
         // Check if the webcam has provided new data
-        if (webcamTexture.didUpdateThisFrame)
+        if (!webcamTexture.didUpdateThisFrame)
         {
-            // Convert the webcam texture to a Tensor
-            Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
-
-            Tensor inputTensor = new Tensor(inputTesorRenderTexture, channels: 3);
-
-
-            // Execute the model with the input tensor
-            worker.Execute(inputTensor);
-
-            // Retrieve the output tensor
-            Tensor outputTensor = worker.PeekOutput();
-
-            string sss = "(";
-            outputTensor.shape.ToArray().Each(_ => sss + ", " + _);
-
-            Debug.Log("shape = " + sss + ")");
-
-
-            // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
-            float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
-
-            var tree = FaceChopped.DekkuTree(outputTensor);
-
-            var read = FaceChopped.ReadTensor(
-                DetectionThreshold,
-                NmsThreshold,
-                ConfidenceThreshold,
-                inputTesorRenderTexture,
-                data)
-                    .Each(_ => _.Rectangle)
-                    .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
-                    .ToList();
-
-            var detectionResults = read;
-
-            Debug.Log("found " + detectionResults.Count + " faces");
-
-            // create thge output texture if we need to
-            if (null == outputTexture2D)
-                outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
-
-            // fill it randomly
-            outputTexture2D.Confetti(detectionResults);
-
-            // push the changes to the GPU
-            outputTexture2D.Apply();
-
-
-            // Dispose of the input tensor to free resources
-            inputTensor.Dispose();
-            outputTensor.Dispose();
+            return;
         }
-    }
-    bool flip;
 
-    public Material outputMaterial;
+
+        // Convert the webcam texture to a Tensor
+        Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
+
+        var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold, NmsThreshold, ConfidenceThreshold);
+
+        // create thge output texture if we need to
+        if (null == outputTexture2D)
+            outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
+
+        // fill it randomly
+        outputTexture2D.Confetti(detectionResults);
+
+        // push the changes to the GPU
+        outputTexture2D.Apply();
+    }
+
     private void OnDestroy()
     {
-        worker?.Dispose();
+        yoloPipe?.Dispose();
     }
 }

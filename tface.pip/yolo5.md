@@ -70,12 +70,35 @@ to fix this, i want to understand when it does work.
 
 okay
 
-- i want/need to run it on a known texture from the dataset that it works on already
-- i want to run it on a static texture when a key is pressed
-- i need to revork the process to be suitable for the above
-- i should refactor the TensorScript into something less "spagetti"
+- [ ] i want/need to run it on a known texture from the dataset that it works on already
+- [ ] i want to run it on a static texture when a key is pressed
+- [ ] i need to revork the process to be suitable for the above
+- [x] i should refactor the TensorScript into something less "spagetti"
 
 
+
+asked abotu this regardless
+
+```markdown
+https://stackoverflow.com/questions/78840000/yolo5-unity3d-barracuda
+
+Is there documentation for what yolo-v5's output is?
+
+We (or I) are trying to use YOLOv5 (for now) to detect faces in real time from an HDMI input.
+Cartoon faces, video game faces, natural faces - all are welcome for our application.
+I've followed the instructions to retrain it, but, the results seem nonsensical.
+
+[![enter image description here][1]][1]
+
+I've red the embedding/export instructions - but - don't understand the details of how to interpret the output tensor.
+
+- https://github.com/Hexmagic/ONNX-yolov5/blob/master/src/test.cpp
+
+TLDR; I'm trying to interpret the yolo-v5 output but the examples don't seem to illustrate what's going on to me.
+
+
+  [1]: https://i.sstatic.net/wivN4y8Y.png
+```
 
 
 

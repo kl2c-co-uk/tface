@@ -21,8 +21,10 @@ namespace kl2c
 {
     public class YoloPipe : IDisposable
     {
-        private Model runtimeModel;
+        public readonly Model runtimeModel;
         private IWorker worker;
+
+        public (int, int) Size => (runtimeModel.inputs[0].shape[6], runtimeModel.inputs[0].shape[5]);
 
         public YoloPipe(NNModel modelAsset)
         {
@@ -62,7 +64,16 @@ namespace kl2c
             Debug.Log("hey! apply nms et al");
 
             // peel out the data
-            var tree = FaceChopped.DekkuTree(outputTensor);
+            var deku = FaceChopped.DekkuTree(outputTensor);
+            var tree = FaceChopped.ReadTensor(
+                detectionThreshold, nmsThreshold, confidenceThreshold,
+                Size,
+            // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
+                outputTensor.ToReadOnlyArray()
+                )
+                    .Each(_ => _.Rectangle)
+                    .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
+                    .ToList();
 
             // Dispose of the input tensor to free resources
             inputTensor.Dispose();
