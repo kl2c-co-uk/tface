@@ -18,6 +18,7 @@ public static class YOLOE
         return a;
     }
 
+
     public static void Each<I>(this IEnumerable<I> i, System.Action<I> f)
     {
         foreach (var e in i)

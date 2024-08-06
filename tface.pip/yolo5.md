@@ -70,10 +70,43 @@ to fix this, i want to understand when it does work.
 
 okay
 
-- [ ] i want/need to run it on a known texture from the dataset that it works on already
-- [ ] i want to run it on a static texture when a key is pressed
-- [ ] i need to revork the process to be suitable for the above
-- [x] i should refactor the TensorScript into something less "spagetti"
+- i've checked and "my own" things give silly results
+- i want to try and extraqc the model from FaceONNX and see if that can be import/export and used
+
+
+
+... actually ... no; visualising both models in nettron reveals we're doing very different things.
+
+so.
+
+so copying faceonnx was a mistake.
+
+i need ... to ...
+
+the output is 1575x6
+
+x y w h class confidence?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
