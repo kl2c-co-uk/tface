@@ -31,7 +31,6 @@ public class TensorScript : MonoBehaviour
 
         // check the model size
         Debug.Assert(1 == runtimeModel.inputs.Count);
-
         Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
 
         // these should be 1
@@ -60,6 +59,7 @@ public class TensorScript : MonoBehaviour
     public float NmsThreshold = 0.5f;
     [UnityEngine.Range(0, 1)]
     public float ConfidenceThreshold = 0.4f;
+
 
     void Update()
     {
@@ -100,16 +100,16 @@ public class TensorScript : MonoBehaviour
                     .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
                     .ToList();
 
-            var detectionResults = tree;// (flip = !flip) ? tree : read;
+            var detectionResults = read;
 
             Debug.Log("found " + detectionResults.Count + " faces");
 
+            // create thge output texture if we need to
             if (null == outputTexture2D)
                 outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
 
             // fill it randomly
-            outputTexture2D.Confetti(
-                detectionResults);
+            outputTexture2D.Confetti(detectionResults);
 
             // push the changes to the GPU
             outputTexture2D.Apply();

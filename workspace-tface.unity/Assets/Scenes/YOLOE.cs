@@ -58,8 +58,8 @@ public static class YOLOE
         patches.Each(rectangle =>
         {
             var colour = colours[random.Next(0, colours.Length)];
-            for (int x = (int)rectangle.left; x < (int)rectangle.right; ++x)
-                for (int y = (int)rectangle.top; y < (int)rectangle.bottom; ++y)
+            for (int x = (int)rectangle.xMin; x < (int)rectangle.xMax; ++x)
+                for (int y = (int)rectangle.yMin; y < (int)rectangle.yMax; ++y)
                     target.SetPixel(x, y, colour);
         });
     }
