@@ -3,9 +3,57 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using UnityEngine;
-
+using UnityEngine;
+using Unity.Barracuda;
+using System.Collections.Generic;
+using System.Linq;
 public static class FaceChopped
 {
+
+	public static List<Rect> DekkuTree(Tensor outTensor)
+	{
+		List<Rect> boxes = new List<Rect>();
+		List<int> indices = new List<int>();
+		List<float> scores = new List<float>();
+
+		int numRows = outTensor.shape[0]; // number of rows
+		int numCols = outTensor.shape[1]; // number of columns
+
+		for (int r = 0; r < numRows; r++)
+		{
+			float cx = outTensor[r, 0];
+			float cy = outTensor[r, 1];
+			float w = outTensor[r, 2];
+			float h = outTensor[r, 3];
+			float sc = outTensor[r, 4];
+
+			Debug.Log(sc);
+
+			// Retrieve the confidence scores for the classes
+			float maxV = float.NegativeInfinity;
+			int maxIndex = -1;
+			for (int i = 5; i < numCols; i++)
+			{
+				float conf = outTensor[r, i] * sc;
+				if (conf > maxV)
+				{
+					maxV = conf;
+					maxIndex = i;
+				}
+			}
+
+			scores.Add(maxV);
+			boxes.Add(new Rect(cx - w / 2, cy - h / 2, w, h));
+			indices.Add(r);
+		}
+
+		// Use the boxes, scores, and indices as needed
+		return boxes;
+    }
+
+
+
+
 	public static List<FaceONNX.FaceDetectionResult> ReadTensor(
 		float DetectionThreshold,
 		float NmsThreshold,

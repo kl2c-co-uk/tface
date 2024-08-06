@@ -88,29 +88,31 @@ public class TensorScript : MonoBehaviour
             // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
             float[] data = outputTensor.ToReadOnlyArray(); // Flatten the tensor into a readable array
 
-            {
-                var detectionResults = FaceChopped.ReadTensor(
-                    DetectionThreshold,
-                    NmsThreshold,
-                    ConfidenceThreshold,
-                    inputTesorRenderTexture,
-                    data);
+            var tree = FaceChopped.DekkuTree(outputTensor);
 
-                Debug.Log("found " + detectionResults.Count + " faces");
+            var read = FaceChopped.ReadTensor(
+                DetectionThreshold,
+                NmsThreshold,
+                ConfidenceThreshold,
+                inputTesorRenderTexture,
+                data)
+                    .Each(_ => _.Rectangle)
+                    .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
+                    .ToList();
 
-                //
+            var detectionResults = tree;// (flip = !flip) ? tree : read;
 
-                {
-                    if (null == outputTexture2D)
-                        outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
+            Debug.Log("found " + detectionResults.Count + " faces");
 
-                    // fill it randomly
-                    outputTexture2D.Confetti(detectionResults.Each(_ => _.Rectangle));
+            if (null == outputTexture2D)
+                outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
 
-                    // push the changes to the GPU
-                    outputTexture2D.Apply();
-                }
-            }
+            // fill it randomly
+            outputTexture2D.Confetti(
+                detectionResults);
+
+            // push the changes to the GPU
+            outputTexture2D.Apply();
 
 
             // Dispose of the input tensor to free resources
@@ -118,6 +120,7 @@ public class TensorScript : MonoBehaviour
             outputTensor.Dispose();
         }
     }
+    bool flip;
 
     public Material outputMaterial;
     private void OnDestroy()
