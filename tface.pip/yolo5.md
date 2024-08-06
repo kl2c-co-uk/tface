@@ -57,6 +57,23 @@ If you (or future me) want/need to edit the file, `yolov5.py` you might enjoy us
 
 
 ----
+----
+notes on what i'm doing
+----
+
+
+it seems to keep not quite working
+
+that's not good
+
+to fix this, i want to understand when it does work.
+
+okay
+
+- i want/need to run it on a known texture from the dataset that it works on already
+- i want to run it on a static texture when a key is pressed
+- i need to revork the process to be suitable for the above
+- i should refactor the TensorScript into something less "spagetti"
 
 
 
