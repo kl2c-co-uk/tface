@@ -67,17 +67,18 @@ public static class YOLOE
             yield return f(e);
     }
 
-    public static void Confetti(this Texture2D target, IEnumerable<Rect> patches)
-    {
-        var p = patches.AsReadOnlyList();
-        Confetti(target, p, new System.Random(Seed: p.Count));
-    }
-
     /// <summary>
     /// fill in faces with random boxes. used fur debugging (sorry)
     /// </summary>
-    public static void Confetti(this Texture2D target, IEnumerable<Rect> patches, System.Random random)
+    public static void Confetti(this Texture2D target, IEnumerable<Rect> patches, System.Random random = null)
     {
+        if (null == random)
+        {
+            var p = patches.AsReadOnlyList();
+            random = new System.Random(Seed: p.Count);
+            patches = p;
+        }
+
         target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => UnityEngine.Color.black).ToArray());
         var colours = new UnityEngine.Color[]
         {
