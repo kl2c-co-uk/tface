@@ -61,20 +61,45 @@ namespace kl2c
             // Retrieve the output tensor
             Tensor outputTensor = worker.PeekOutput();
 
-            Debug.Log("hey! apply nms et al");
-
             // peel out the data
             var floats = outputTensor.ToReadOnlyArray();
             var deku = FaceChopped.DekkuTree(outputTensor);
             var tree = FaceChopped.ReadTensor(
                 detectionThreshold, nmsThreshold, confidenceThreshold,
                 Size,
-            // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
+                // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
                 floats
                 )
                     .Each(_ => _.Rectangle)
                     .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
                     .ToList();
+
+            // build a transposed copy
+            if (dump)
+            {
+                const int width = 6;
+
+                var entries = floats.Length / width;
+
+                Debug.Assert((entries * width) == floats.Length);
+
+                var tops = Enumerable.Range(0, width).ToArray();
+
+
+
+                for (int i = 0; i < width; ++i)
+                {
+                    var mine = tops.Each(t =>
+                    {
+                        return floats[i + (t * width)];
+                    });
+
+
+                    throw new UnityException(mine.Fold("i = " + i + ", and f = ")((l, r) => l + ", " + r));
+                }
+                throw new UnityException("???");
+            }
+
 
 
             // write it row and col
@@ -83,7 +108,7 @@ namespace kl2c
                 using var row = new StreamWriter("yolo-row.csv");
                 using var col = new StreamWriter("yolo-col.csv");
 
-                for (int i = 0; i < floats.Length; )
+                for (int i = 0; i < floats.Length;)
                 {
                     var cell = floats[i] + ",";
                     row.Write(cell);
@@ -96,8 +121,6 @@ namespace kl2c
                     if (0 == (i % (floats.Length / 6)))
                         col.Write("\n");
                 }
-
-
             }
 
 
@@ -116,4 +139,13 @@ namespace kl2c
             worker?.Dispose();
         }
     }
+
+    public struct Patch
+    {
+        Rect rect;
+        int label;
+        float confidence;
+
+    }
+
 }

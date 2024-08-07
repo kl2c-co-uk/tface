@@ -6,48 +6,48 @@ using UnityEngine;
 
 public class OterhTest : MonoBehaviour
 {
-    public Material otherImage;
-    public Material otherResult;
+	public Material otherImage;
+	public Material otherResult;
 
-    public NNModel modelAsset;
-    [UnityEngine.Range(0, 1)]
-    public float DetectionThreshold = 0.3f;
-    [UnityEngine.Range(0, 1)]
-    public float NmsThreshold = 0.5f;
-    [UnityEngine.Range(0, 1)]
-    public float ConfidenceThreshold = 0.4f;
+	public NNModel modelAsset;
+	[UnityEngine.Range(0, 1)]
+	public float DetectionThreshold = 0.3f;
+	[UnityEngine.Range(0, 1)]
+	public float NmsThreshold = 0.5f;
+	[UnityEngine.Range(0, 1)]
+	public float ConfidenceThreshold = 0.4f;
 
-    void Update()
-    {
-        if (!Input.GetButtonDown("Jump"))
-            return;
+	void Update()
+	{
+		if (!Input.GetButtonDown("Jump"))
+			return;
 
-        enabled = false;
+		enabled = false;
 
 
 
-        // build the pope thing
-        using var yoloPipe = new kl2c.YoloPipe(modelAsset);
-        var (width, height) = yoloPipe.Size;
-        yoloPipe.dump = true;
+		// build the pope thing
+		using var yoloPipe = new kl2c.YoloPipe(modelAsset);
+		var (width, height) = yoloPipe.Size;
+		yoloPipe.dump = true;
 
-        var inputRenderTexture = new RenderTexture(width, height, 0);
+		var inputRenderTexture = new RenderTexture(width, height, 0);
 
-        // Convert the input texture to a Tensor
-        Graphics.Blit(source: otherImage.mainTexture, dest: inputRenderTexture);
+		// Convert the input texture to a Tensor
+		Graphics.Blit(source: otherImage.mainTexture, dest: inputRenderTexture);
 
-        // prepare the output putextr
-        var outTexture = new Texture2D(inputRenderTexture.width, inputRenderTexture.height);
-        otherResult.mainTexture = outTexture;
+		// prepare the output putextr
+		var outTexture = new Texture2D(inputRenderTexture.width, inputRenderTexture.height);
+		otherResult.mainTexture = outTexture;
 
-        var detectionResults = yoloPipe.Execute(inputRenderTexture, DetectionThreshold, NmsThreshold, ConfidenceThreshold);
+		var detectionResults = yoloPipe.Execute(inputRenderTexture, DetectionThreshold, NmsThreshold, ConfidenceThreshold);
 
-        // fill it randomly
-        outTexture.Confetti(detectionResults);
+		// fill it randomly
+		outTexture.Confetti(detectionResults);
 
-        // push the changes to the GPU
-        outTexture.Apply();
+		// push the changes to the GPU
+		outTexture.Apply();
 
-        Destroy(inputRenderTexture);
-    }
+		Destroy(inputRenderTexture);
+	}
 }

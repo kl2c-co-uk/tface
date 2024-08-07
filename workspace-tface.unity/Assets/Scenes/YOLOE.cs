@@ -19,6 +19,17 @@ public static class YOLOE
     }
 
 
+    public static System.Func<System.Func<O, I, O>, O> Fold<O, I>(this IEnumerable<I> i, O o)
+    {
+        return f =>
+        {
+            foreach (var e in i)
+                o = f(o, e);
+            return o;
+        };
+    }
+
+
     public static void Each<I>(this IEnumerable<I> i, System.Action<I> f)
     {
         foreach (var e in i)

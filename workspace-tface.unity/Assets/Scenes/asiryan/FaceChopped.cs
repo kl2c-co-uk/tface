@@ -19,9 +19,9 @@ public static class FaceChopped
 		int numRows = outTensor.shape[0]; // number of rows
 		int numCols = outTensor.shape[1]; // number of columns
 
-		Debug.Log(
-			"numCols = " + numCols
-			+ "\n\tnumRows = " + numRows  );
+		//Debug.Log(
+		//	"numCols = " + numCols
+		//	+ "\n\tnumRows = " + numRows  );
 		for (int r = 0; r < numRows; r++)
 		{
 			float cx = outTensor[r, 0];
@@ -49,7 +49,7 @@ public static class FaceChopped
 		}
 
 
-		Debug.Log("TODO - DetectionThreshold / NmsThreshold / ConfidenceThreshold stuff");
+		//Debug.Log("TODO - DetectionThreshold / NmsThreshold / ConfidenceThreshold stuff");
 
 		// Use the boxes, scores, and indices as needed
 		return boxes;
