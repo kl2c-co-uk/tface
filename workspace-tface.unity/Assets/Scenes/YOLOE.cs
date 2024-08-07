@@ -4,6 +4,7 @@ using System.Drawing;
 using Unity.VisualScripting;
 using UnityEngine;
 using System.Linq;
+using System.Threading.Tasks;
 
 /// <summary>
 /// code and extensions for working with the/a YOLO models
@@ -29,6 +30,20 @@ public static class YOLOE
         };
     }
 
+
+    public static O[] Fork<I, O>(this IEnumerable<I> i, System.Func<I, O> f)
+    {
+        var input = i.ToArray();
+
+        var output = new O[input.Length];
+
+        Parallel.ForEach(Enumerable.Range(0, output.Length), i =>
+        {
+            output[i] = f(input[i]);
+        });
+
+        return output;
+    }
 
     public static void Each<I>(this IEnumerable<I> i, System.Action<I> f)
     {

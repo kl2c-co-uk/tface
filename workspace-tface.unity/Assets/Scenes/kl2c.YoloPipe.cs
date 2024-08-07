@@ -15,6 +15,8 @@ using System.IO;
 using System.Drawing;
 using System.Net.WebSockets;
 using System.Linq;
+using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 
 namespace kl2c
@@ -74,56 +76,12 @@ namespace kl2c
                     .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
                     .ToList();
 
-            // build a transposed copy
-            if (dump)
-            {
-                const int width = 6;
-                int l = floats.Length;
-                int count = l / width;
-
-                var heads = Enumerable.Range(0, width).ToArray();
-
-
-                using var fix = new StreamWriter("yolo-fix.csv");
-
-                for (int i = 0; i < count; ++i)
-                {
-                    var entry = heads.Each(h => floats[i + (h * count)]);
-
-                    entry.Each(h =>
-                    {
-                        fix.Write(h + ", ");
-                    });
-
-
-                    fix.Write("\n");
-                }
-            }
-
-
-
-            // write it row and col
-            if (dump)
-            {
-                using var row = new StreamWriter("yolo-row.csv");
-                using var col = new StreamWriter("yolo-col.csv");
-
-                for (int i = 0; i < floats.Length;)
-                {
-                    var cell = floats[i] + ",";
-                    row.Write(cell);
-                    col.Write(cell);
-
-                    i++;
-
-                    if (0 == (i % 6))
-                        row.Write("\n");
-                    if (0 == (i % (floats.Length / 6)))
-                        col.Write("\n");
-                }
-            }
-
-
+            tree =
+                Transpose(6, floats)
+                    .Where(p => p.Item2 > detectionThreshold)
+                    .Where(p => p.Item3[0] > confidenceThreshold)
+                    .Select(p => p.Item1)
+                    .ToList();
 
             // Dispose of the input tensor to free resources
             inputTensor.Dispose();
@@ -132,20 +90,52 @@ namespace kl2c
             return tree;
         }
 
+        private static IEnumerable<(Rect, float, float[])> Transpose(int width, Tensor outputTensor)
+        {
+            return Transpose(width, outputTensor.ToReadOnlyArray());
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="width">5 + number of classes</param>
+        /// <param name="floats">outputTensor.ToReadOnlyArray()</param>
+        /// <returns></returns>
+        private static IEnumerable<(Rect, float, float[])> Transpose(int width, float[] floats)
+        {
+            Debug.Assert(6 == width); //
+            int l = floats.Length;
+            int count = l / width;
+
+            var heads = Enumerable.Range(0, 5).Select(h => h * count).ToArray();
+
+            var tail = Enumerable.Range(5, width).Select(h => h * count).ToArray();
+
+            return Enumerable.Range(0, count).Fork(i =>
+            {
+                // compute the entry
+                var entry = heads
+                    .Select(h => floats[i + h])
+                    .ToArray();
+
+                var rect = new Rect();
+
+                rect.x = entry[0];
+                rect.y = entry[1];
+                rect.width = entry[2];
+                rect.height = entry[3];
+
+                return (rect, entry[4], tail.Select(h => floats[i + h]).ToArray());
+            });
+        }
+
         public bool dump = false;
 
         public void Dispose()
         {
             worker?.Dispose();
         }
-    }
-
-    public struct Patch
-    {
-        Rect rect;
-        int label;
-        float confidence;
-
     }
 
 }
