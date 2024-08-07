@@ -51,6 +51,16 @@ public static class YOLOE
             f(e);
     }
 
+    public static IEnumerable<I> Drop<I>(this IEnumerable<I> l, int i)
+    {
+
+        foreach (var e in l)
+            if (i > 0)
+                i--;
+            else
+                yield return e;
+    }
+
     public static IEnumerable<O> Each<I, O>(this IEnumerable<I> i, System.Func<I, O> f)
     {
         foreach (var e in i)

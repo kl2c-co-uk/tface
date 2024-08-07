@@ -29,7 +29,6 @@ public class OterhTest : MonoBehaviour
 		// build the pope thing
 		using var yoloPipe = new kl2c.YoloPipe(modelAsset);
 		var (width, height) = yoloPipe.Size;
-		yoloPipe.dump = true;
 
 		var inputRenderTexture = new RenderTexture(width, height, 0);
 
