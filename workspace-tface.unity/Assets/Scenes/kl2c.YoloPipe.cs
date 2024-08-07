@@ -64,16 +64,43 @@ namespace kl2c
             Debug.Log("hey! apply nms et al");
 
             // peel out the data
+            var floats = outputTensor.ToReadOnlyArray();
             var deku = FaceChopped.DekkuTree(outputTensor);
             var tree = FaceChopped.ReadTensor(
                 detectionThreshold, nmsThreshold, confidenceThreshold,
                 Size,
             // Assuming `output` is the tensor with shape (1, 1, 6, 25200)
-                outputTensor.ToReadOnlyArray()
+                floats
                 )
                     .Each(_ => _.Rectangle)
                     .Each(r => new Rect(r.X, r.Y, r.Width, r.Height))
                     .ToList();
+
+
+            // write it row and col
+            if (dump)
+            {
+                using var row = new StreamWriter("yolo-row.csv");
+                using var col = new StreamWriter("yolo-col.csv");
+
+                for (int i = 0; i < floats.Length; )
+                {
+                    var cell = floats[i] + ",";
+                    row.Write(cell);
+                    col.Write(cell);
+
+                    i++;
+
+                    if (0 == (i % 6))
+                        row.Write("\n");
+                    if (0 == (i % (floats.Length / 6)))
+                        col.Write("\n");
+                }
+
+
+            }
+
+
 
             // Dispose of the input tensor to free resources
             inputTensor.Dispose();
@@ -81,6 +108,8 @@ namespace kl2c
 
             return tree;
         }
+
+        public bool dump = false;
 
         public void Dispose()
         {
