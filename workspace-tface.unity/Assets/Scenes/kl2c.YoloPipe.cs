@@ -78,26 +78,26 @@ namespace kl2c
             if (dump)
             {
                 const int width = 6;
+                int l = floats.Length;
+                int count = l / width;
 
-                var entries = floats.Length / width;
-
-                Debug.Assert((entries * width) == floats.Length);
-
-                var tops = Enumerable.Range(0, width).ToArray();
+                var heads = Enumerable.Range(0, width).ToArray();
 
 
+                using var fix = new StreamWriter("yolo-fix.csv");
 
-                for (int i = 0; i < width; ++i)
+                for (int i = 0; i < count; ++i)
                 {
-                    var mine = tops.Each(t =>
+                    var entry = heads.Each(h => floats[i + (h * count)]);
+
+                    entry.Each(h =>
                     {
-                        return floats[i + (t * width)];
+                        fix.Write(h + ", ");
                     });
 
 
-                    throw new UnityException(mine.Fold("i = " + i + ", and f = ")((l, r) => l + ", " + r));
+                    fix.Write("\n");
                 }
-                throw new UnityException("???");
             }
 
 
