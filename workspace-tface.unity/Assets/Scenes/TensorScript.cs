@@ -52,7 +52,6 @@ public class TensorScript : MonoBehaviour
 			return;
 		}
 
-
 		// Convert the webcam texture to a Tensor
 		Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
 
@@ -64,6 +63,7 @@ public class TensorScript : MonoBehaviour
 
 		// fill it randomly
 		outputTexture2D.Fill(UnityEngine.Color.black);
+		outputTexture2D.Fill(UnityEngine.Color.clear);
 		outputTexture2D.Confetti(detectionResults);
 
 		// push the changes to the GPU

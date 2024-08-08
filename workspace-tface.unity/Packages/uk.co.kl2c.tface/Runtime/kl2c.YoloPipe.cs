@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Barracuda;
 using System.Linq;
+using System.IO;
 
 namespace kl2c
 {
@@ -53,6 +54,11 @@ namespace kl2c
 					.Where(p => p.Item2 > detectionThreshold)
 					.Where(p => p.Item3[0] > confidenceThreshold)
 					.Select(p => p.Item1)
+					.Select(patch =>
+					{
+						patch.y = inputTexture.height - patch.y;
+						return patch;
+					})
 					.ToList();
 
 			// Dispose of the input tensor to free resources
