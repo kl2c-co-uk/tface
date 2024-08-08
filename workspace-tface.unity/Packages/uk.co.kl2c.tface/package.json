@@ -1,0 +1,12 @@
+{
+	"name": "uk.co.kl2c.tface",
+	"version": "2024.8.8",
+	"displayName": "kl2c Tensor Face",
+	"unity": "2021.3",
+	"unityRelease": "23f1",
+	"author": {
+	  "name": "kl2c",
+	  "email": "peter.lavalle@kl2c.co.uk",
+	  "url": "https://peterlavalle.github.io/"
+	}
+}
