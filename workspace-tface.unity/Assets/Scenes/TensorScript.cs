@@ -63,12 +63,13 @@ public class TensorScript : MonoBehaviour
 
 		// fill it randomly
 		outputTexture2D.Fill(UnityEngine.Color.black);
-		outputTexture2D.Fill(UnityEngine.Color.clear);
-		outputTexture2D.Confetti(detectionResults);
+		//outputTexture2D.Confetti(detectionResults);
+		outputTexture2D.FaceOvals(detectionResults);
 
 		// push the changes to the GPU
 		outputTexture2D.Apply();
 	}
+
 
 	private void OnDestroy()
 	{

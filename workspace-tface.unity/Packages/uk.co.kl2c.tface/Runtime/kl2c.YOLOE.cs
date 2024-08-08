@@ -88,6 +88,37 @@ namespace kl2c
 			target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => colour).ToArray());
 		}
 
+
+		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches)
+		{
+			patches.Each(rectangle =>
+			{
+				float w = 2.0f / (float)rectangle.width;
+				float h = 2.0f/ (float)rectangle.height;
+				for (int x = (int)rectangle.xMin; x < (int)rectangle.xMax; ++x)
+					for (int y = (int)rectangle.yMin; y < (int)rectangle.yMax; ++y)
+					{
+						float i = w * (rectangle.center.x - x);
+						float j = h * (rectangle.center.y - y);
+
+						float r2 = (i * i) + (j * j);
+
+						if (r2 > 1)
+							continue;
+
+						var c = UnityEngine.Color.Lerp(
+							UnityEngine.Color.white,
+							UnityEngine.Color.black,
+							r2);
+
+
+						target.SetPixel(x, y, c);
+					}
+			});
+		}
+
+
+
 		/// <summary>
 		/// fill in faces with random boxes. used fur debugging (sorry)
 		/// </summary>
