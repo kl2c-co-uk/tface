@@ -1,0 +1,69 @@
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file and tab indentation by default
+[*]
+charset = utf-8
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Match specific Unity C# files
+[*.cs]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+
+
+# Match Unity shader files
+[*.shader]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+
+# Match Unity meta files
+[*.meta]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+
+# Match Unity prefab and scene files
+[*.{prefab,unity,mat,anim}]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+
+# Override for text files
+[*.{txt,md,json,yaml,yml}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+
+# Override for XML files (e.g., for project settings)
+[*.xml]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+
+# Override for shell scripts
+[*.sh]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true
+
+# Override for batch scripts
+[*.bat]
+indent_style = tab
+indent_size = tab
+end_of_line = lf
+insert_final_newline = true

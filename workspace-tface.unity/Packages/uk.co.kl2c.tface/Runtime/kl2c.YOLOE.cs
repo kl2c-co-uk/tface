@@ -83,6 +83,11 @@ namespace kl2c
 			return i.Select(f);
 		}
 
+		public static void Fill(this Texture2D target, UnityEngine.Color colour)
+		{
+			target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => colour).ToArray());
+		}
+
 		/// <summary>
 		/// fill in faces with random boxes. used fur debugging (sorry)
 		/// </summary>
@@ -95,7 +100,6 @@ namespace kl2c
 				patches = p;
 			}
 
-			target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => UnityEngine.Color.black).ToArray());
 			var colours = new UnityEngine.Color[]
 			{
 			UnityEngine.Color.blue,
