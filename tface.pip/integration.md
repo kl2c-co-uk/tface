@@ -9,8 +9,9 @@ TFace Package URL (for Unity Package Manager); `git@github.com:kl2c-co-uk/tface.
 Issues identifeid which relate to TFace are;
 - i was not expecteting that I'd need a MonoBehaviour (or whatnot) to carry the asset/NNModel ref into the system.
     - unexpected; i don't think that this really matters though
-- [ ] faces are slightly off; seem to have bottom-corner where center should be
+- [x] faces are slightly off; seem to have bottom-corner where center should be
     - unexpected; check the bubble-drawer
+    - still not sure what's going on; i've haced around it
 - [ ] cartoon faces aren't reliable
     - expected; need to add cartoon face dataset
 - [ ] possible issue finding certain styles of human faces

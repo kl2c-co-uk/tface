@@ -152,6 +152,9 @@ def export(git):
 	onnx.save(model_simp, out)
 
 def yolo5wider(cache, group, txt, url):
+	raise Exception(
+		'check the written bounding boxes ot see if that is why i did wrong'
+	)
 	# download the annotations file
 	annotations = cache.download(
 		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
@@ -183,7 +186,7 @@ def yolo5wider(cache, group, txt, url):
 
 			for data in ZipWalk(images).read(path):
 				import cv2
-				import numpy as np 
+				import numpy as np
 
 				# get the image dimenions - IIRC this was faster than PIL
 				# ... note the h,w ordering ... not my idea

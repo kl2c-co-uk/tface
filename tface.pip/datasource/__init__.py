@@ -80,6 +80,16 @@ class Blurb:
 	def __init__(self, **kwargs):
 		for key, value in kwargs.items():
 			setattr(self, key, value)
+	def __str__(self):
+		txt = 'Blurb{'
+
+		for key, value in self.__dict__.items():
+			txt += str(key) + ":" + str(value) + ","
+		
+		return txt + "}"
+	def __repr__(self):
+		return self.__str__()
+
 
 
 class Cache():
