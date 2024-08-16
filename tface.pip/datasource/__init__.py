@@ -69,6 +69,30 @@ class literator():
 		self._next += 1
 		return item
 
+def random_split(data, l, r, seed = 41):
+	t = l + r
+
+	import random
+	random = random.Random(seed)
+
+	for item in data:
+		if random.randint(0, t) < l:
+			yield (item, None)
+		else:
+			yield (None, item)
+
+
+def only(list, count):
+	if count <= 0:
+		for item in list:
+			yield item
+	else:
+		for item in list:
+			if 0 < count:
+				yield item
+				count -= 1
+
+
 
 def ensure_directory_exists(file_path):
 	directory = os.path.dirname(file_path)
@@ -87,46 +111,6 @@ class Blurb:
 		return txt + "}"
 	def __repr__(self):
 		return self.__str__()
-
-class FacePatch:
-	def __init__(self, **kwargs):
-		# collect the key/vals
-		data = {}	
-		for key, value in kwargs.items():
-			data[key] = value
-
-
-		if 1 == len(data.keys()) and 'ltrb' in data.keys():
-			data = data['ltrb']
-
-			if type([]) == type(data):
-				self.l, self.t, self.r, self.b = map(int, data)
-				return
-		
-		raise Exception('error; unhandled case for face pathc')
-	
-	def __str__(self):
-		txt = 'FacePatch{'
-		for key, value in self.__dict__.items():
-			txt += str(key) + ":" + str(value) + ","
-		return txt + "}"
-	
-	def __repr__(self):
-		return self.__str__()
-
-class DataPoint:
-	def __init__(self, path, patches):
-		self.path = path
-		self.patches = patches
-		
-	def __str__(self):
-		txt = 'DataPoint{'
-		for key, value in self.__dict__.items():
-			txt += str(key) + ":" + str(value) + ","
-		return txt + "}"
-	def __repr__(self):
-		return self.__str__()
-
 
 
 class Cache():

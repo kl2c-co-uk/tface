@@ -1,8 +1,11 @@
 
-from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, FacePatch, DataPoint
+from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, random_split, only
 
 import datasource.config as config
+from  datasource.datapoints import FacePatch, DataPoint
 
+import datasource.datapoints as datapoints
+from datasource.datapoints import split_export
 
 
 def main():
@@ -11,7 +14,6 @@ def main():
 
 
 def i_cartoon(cache):
-
 	split_export(
 		i_cartoon_datapoints(cache),
 		8, 1,
@@ -20,79 +22,6 @@ def i_cartoon(cache):
 			'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
 		)
 	)
-
-
-
-
-def split_export(datapoints, train, val, archive):
-
-	# split them train:val
-	split = random_split(datapoints, train, val)
-	
-	# limit ourselves (for testing)
-	todo = only(split, config.LIMIT)
-
-	for datapoint in todo:
-
-		# compute some coordinates or whatever
-		group = 'train' if (None == datapoint[1]) else 'val'
-		datapoint = datapoint[0] if datapoint[0] else datapoint[1]
-		fKey = md5(datapoint.path)
-		jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
-		txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
-
-		# TODO; skip of it's present
-
-		ensure_directory_exists(jpg)
-		ensure_directory_exists(txt)
-
-		for data in ZipWalk(archive).read(datapoint.path):
-			import cv2
-			import numpy as np
-
-			# get the image dimenions - IIRC this was faster than PIL
-			# ... note the h,w ordering ... not my idea
-			image = cv2.imdecode(
-				np.frombuffer(data, dtype=np.uint8),
-				cv2.IMREAD_COLOR)
-			ih, iw, _ = image.shape
-			
-			dw = 1.0 / float(iw)
-			dh = 1.0 / float(ih)
-			
-			# copy the image to disk
-			with open(jpg, 'wb') as file:
-				file.write(data)
-
-			# convert/write the labels - i'm assuming that they're thte same format (but we'll see)
-			with open(txt, 'w') as file:
-				labels = []
-				for face in datapoint.patches:
-					l = face.l * dw
-					t = face.t * dh
-					r = face.r * dw
-					b = face.b * dh
-					label = (f'0 {l} {t} {r} {b}\n')
-					labels.append(label)
-					file.write(label + '\n')
-
-				# preview the image it we're doing a testing dataset
-				if config.PREVIEW:
-
-					for label in labels:
-						l, t, r, b = list(map(float, label.split(' ')[1:]))
-						
-						start_point = (int(l * iw), int(t * ih))  # Top-left corner
-						end_point = (int(r * iw), int(b * ih))  # Bottom-right corner
-						color = (0, 255, 0)  # Green color
-						thickness = 2  # Thickness of 2 pixels
-
-						cv2.rectangle(image, start_point, end_point, color, thickness)
-
-					cv2.imshow('image with boxes', image)
-					cv2.waitKey(0)
-					cv2.destroyAllWindows()
-
 
 
 def i_cartoon_datapoints(cache):
@@ -143,30 +72,6 @@ def i_cartoon_datapoints(cache):
 		# yield the final datapooint
 		if '' != last:					
 			yield DataPoint(path = last, patches = data)							
-
-
-def random_split(data, l, r, seed = 41):
-	t = l + r
-
-	import random
-	random = random.Random(seed)
-
-	for item in data:
-		if random.randint(0, t) < l:
-			yield (item, None)
-		else:
-			yield (None, item)
-
-
-def only(list, count):
-	if count <= 0:
-		for item in list:
-			yield item
-	else:
-		for item in list:
-			if 0 < count:
-				yield item
-				count -= 1
 
 
 
