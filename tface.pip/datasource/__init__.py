@@ -82,10 +82,47 @@ class Blurb:
 			setattr(self, key, value)
 	def __str__(self):
 		txt = 'Blurb{'
-
 		for key, value in self.__dict__.items():
 			txt += str(key) + ":" + str(value) + ","
+		return txt + "}"
+	def __repr__(self):
+		return self.__str__()
+
+class FacePatch:
+	def __init__(self, **kwargs):
+		# collect the key/vals
+		data = {}	
+		for key, value in kwargs.items():
+			data[key] = value
+
+
+		if 1 == len(data.keys()) and 'ltrb' in data.keys():
+			data = data['ltrb']
+
+			if type([]) == type(data):
+				self.l, self.t, self.r, self.b = map(int, data)
+				return
 		
+		raise Exception('error; unhandled case for face pathc')
+	
+	def __str__(self):
+		txt = 'FacePatch{'
+		for key, value in self.__dict__.items():
+			txt += str(key) + ":" + str(value) + ","
+		return txt + "}"
+	
+	def __repr__(self):
+		return self.__str__()
+
+class DataPoint:
+	def __init__(self, path, patches):
+		self.path = path
+		self.patches = patches
+		
+	def __str__(self):
+		txt = 'DataPoint{'
+		for key, value in self.__dict__.items():
+			txt += str(key) + ":" + str(value) + ","
 		return txt + "}"
 	def __repr__(self):
 		return self.__str__()

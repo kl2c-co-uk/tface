@@ -1,5 +1,5 @@
 
-from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists
+from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, FacePatch, DataPoint
 
 import datasource.config as config
 
@@ -9,6 +9,12 @@ def main():
 	cache = Cache('target/')
 	i_cartoon(cache)
 
+
+
+def split_export(datapoints, l, r, archive):
+	raise Exception(
+		'???'
+	)
 
 def i_cartoon(cache):
 
@@ -23,12 +29,15 @@ def i_cartoon(cache):
 
 	# extract the datasets
 	
+
+
 	for datapoint in todo:
+
 
 		# compute some coordinates or whatever
 		group = 'train' if (None == datapoint[1]) else 'val'
 		datapoint = datapoint[0] if datapoint[0] else datapoint[1]
-		fKey = md5(datapoint.name)
+		fKey = md5(datapoint.path)
 		jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
 		txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
 
@@ -43,7 +52,7 @@ def i_cartoon(cache):
 		ensure_directory_exists(jpg)
 		ensure_directory_exists(txt)
 
-		for data in ZipWalk(training).read(datapoint.name):
+		for data in ZipWalk(training).read(datapoint.path):
 			import cv2
 			import numpy as np
 
@@ -64,7 +73,7 @@ def i_cartoon(cache):
 			# convert/write the labels - i'm assuming that they're thte same format (but we'll see)
 			with open(txt, 'w') as file:
 				labels = []
-				for face in datapoint.data:
+				for face in datapoint.patches:
 					l = face.l * dw
 					t = face.t * dh
 					r = face.r * dw
@@ -74,7 +83,7 @@ def i_cartoon(cache):
 					file.write(label + '\n')
 
 				# preview the image it we're doing a testing dataset
-				if 0 != config.LIMIT:
+				if config.PREVIEW:
 
 					for label in labels:
 						l, t, r, b = list(map(float, label.split(' ')[1:]))
@@ -115,7 +124,7 @@ def i_cartoon_datapoints(cache):
 
 				# emit the prior datapoint
 				if '' != last:					
-					yield Blurb(name = last, data = data)					
+					yield DataPoint(path = last, patches = data)					
 				
 				# start a datapoint
 				data = []
@@ -130,14 +139,14 @@ def i_cartoon_datapoints(cache):
 			
 			# add the patch tot he datapoint
 			data.append(
-				Blurb(l = int(l), t = int(t), r = int(r), b = int(b))
+				FacePatch(ltrb = [l, t, r, b])
 			)
 
 
 		
 		# yield the final datapooint
 		if '' != last:					
-			yield Blurb(name = last, data = data)					
+			yield DataPoint(path = last, patches = data)							
 
 
 def random_split(data, l, r, seed = 41):

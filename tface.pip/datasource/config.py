@@ -7,6 +7,8 @@ INPUT_SIZE = 160 # small to make training fast
 # how many items per dataset to extract
 LIMIT = 10
 
+PREVIEW = 0 != LIMIT
+
 # how many times to go over everything
 EPOCHS = 40 # this was teh recomended
 
