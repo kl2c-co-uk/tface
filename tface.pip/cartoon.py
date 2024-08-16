@@ -10,29 +10,29 @@ def main():
 	i_cartoon(cache)
 
 
-
-def split_export(datapoints, l, r, archive):
-	raise Exception(
-		'???'
-	)
-
 def i_cartoon(cache):
 
-	# all the datapoints
-	datapoints = i_cartoon_datapoints(cache)
+	split_export(
+		i_cartoon_datapoints(cache),
+		8, 1,
+		cache.download(
+			# training = target/cb67961c4ba344c84b3e5442206436ac
+			'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
+		)
+	)
 
-	# split them 80:10
-	split = random_split(datapoints, 8, 1)
+
+
+
+def split_export(datapoints, train, val, archive):
+
+	# split them train:val
+	split = random_split(datapoints, train, val)
 	
-	# limit ourselves (sorry)
+	# limit ourselves (for testing)
 	todo = only(split, config.LIMIT)
 
-	# extract the datasets
-	
-
-
 	for datapoint in todo:
-
 
 		# compute some coordinates or whatever
 		group = 'train' if (None == datapoint[1]) else 'val'
@@ -43,16 +43,10 @@ def i_cartoon(cache):
 
 		# TODO; skip of it's present
 
-		# grab the archive
-		training = cache.download(
-			# training = target/cb67961c4ba344c84b3e5442206436ac
-			'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
-		)
-
 		ensure_directory_exists(jpg)
 		ensure_directory_exists(txt)
 
-		for data in ZipWalk(training).read(datapoint.path):
+		for data in ZipWalk(archive).read(datapoint.path):
 			import cv2
 			import numpy as np
 
@@ -98,6 +92,8 @@ def i_cartoon(cache):
 					cv2.imshow('image with boxes', image)
 					cv2.waitKey(0)
 					cv2.destroyAllWindows()
+
+
 
 def i_cartoon_datapoints(cache):
 	annotations = cache.download(

@@ -5,7 +5,7 @@ INPUT_SIZE = 160 # small to make training fast
 
 # small training limits for development time
 # how many items per dataset to extract
-LIMIT = 10
+LIMIT = 3
 
 PREVIEW = 0 != LIMIT
 
