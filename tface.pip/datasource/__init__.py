@@ -69,6 +69,41 @@ class literator():
 		self._next += 1
 		return item
 
+def random_split(data, l, r, seed = 41):
+
+	assert 0 < l or 0 < r
+
+	if r == 0:
+		for item in data:
+			yield (item, None)
+	elif l == 0:
+		for item in data:
+			yield (None, item)
+	else:
+
+		t = l + r
+
+		import random
+		random = random.Random(seed)
+
+		for item in data:
+			if random.randint(0, t) < l:
+				yield (item, None)
+			else:
+				yield (None, item)
+
+
+def only(list, count):
+	if count <= 0:
+		for item in list:
+			yield item
+	else:
+		for item in list:
+			if 0 < count:
+				yield item
+				count -= 1
+
+
 
 def ensure_directory_exists(file_path):
 	directory = os.path.dirname(file_path)
@@ -82,14 +117,11 @@ class Blurb:
 			setattr(self, key, value)
 	def __str__(self):
 		txt = 'Blurb{'
-
 		for key, value in self.__dict__.items():
 			txt += str(key) + ":" + str(value) + ","
-		
 		return txt + "}"
 	def __repr__(self):
 		return self.__str__()
-
 
 
 class Cache():

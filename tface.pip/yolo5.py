@@ -7,6 +7,9 @@ import os, shutil
 import datasource.config as config
 from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists
 import subprocess
+from  datasource.datapoints import FacePatch, DataPoint
+import datasource.datapoints as datapoints
+from datasource.datapoints import split_export
 
 import torch
 assert(torch.cuda.is_available())
@@ -28,6 +31,16 @@ def main(args):
 		yolo5wider(cache, 'val',
 			'wider_face_val_bbx_gt.txt',
 			'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
+		)
+
+		# do the newer cartoon ones
+		split_export(
+			i_cartoon_datapoints(cache),
+			8, 1,
+			cache.download(
+				# training = target/cb67961c4ba344c84b3e5442206436ac
+				'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
+			)
 		)
 
 	if args.clone:
@@ -152,9 +165,9 @@ def export(git):
 	onnx.save(model_simp, out)
 
 def yolo5wider(cache, group, txt, url):
-	raise Exception(
-		'check the written bounding boxes ot see if that is why i did wrong'
-	)
+	"""fully extract this dataset"""
+
+
 	# download the annotations file
 	annotations = cache.download(
 		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
@@ -163,84 +176,73 @@ def yolo5wider(cache, group, txt, url):
 	# download the images file
 	images = cache.download(url)
 
-	point_count = 0
-
-	for point in wider(annotations, txt):
-		if config.LIMIT > 0 and point_count >= config.LIMIT:
-			break
-		else:
-			point_count += 1
+	# adapt the older format (from July) to work with the newer approach (hey August)
+	def adapt():
+		for point in wider(annotations, txt):
 			
-			path, faces = point
+			patches = []
+			for l, t, w, h in point[1]:
+				r = l + w
+				b = t + h
+				patches.append(
+					FacePatch(ltrb=[l, t, r, b])
+				)
+			
+			yield DataPoint(point[0], patches)
+	split_export(
+		adapt(), 
+		1 if 'train' == group else 0,
+		1 if 'val' == group else 0,
+		images)
 
-			fKey = md5(path)
+def i_cartoon_datapoints(cache):
+	annotations = cache.download(
+		# annotations = target/712e3f96290bfc9c1c93a18f16ef40e8
+		'https://drive.usercontent.google.com/download?id=15IHSlNBZBZs_hj6B341swc00ha5fpvB7&export=download&authuser=0&confirm=t&uuid=72fd55fe-6a76-4c73-91ee-63de54aa2775&at=APZUnTXR3ogM4tIFCGrcFoaswAor:1723670943322'
+	)
 
-			jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
-			txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
 
-			if os.path.isfile(jpg) and os.path.isfile(txt):
-				continue
+	for lines in ZipWalk(annotations).text('personai_icartoonface_dettrain_anno_updatedv1.0.csv'):
+		seen = []
 
-			ensure_directory_exists(jpg)
-			ensure_directory_exists(txt)
+		# start a non-datapoint
+		last = ''
+		data = '?unset?'
 
-			for data in ZipWalk(images).read(path):
-				import cv2
-				import numpy as np
+		while lines.more():
+			line = lines.take()
 
-				# get the image dimenions - IIRC this was faster than PIL
-				# ... note the h,w ordering ... not my idea
-				ih, iw, _ = cv2.imdecode(
-					np.frombuffer(data, dtype=np.uint8),
-					cv2.IMREAD_COLOR).shape
+			# get the line content
+			name, l, t, r, b = line.split(',')
+
+			# check if we need to switch datapoints
+			if name != last:
+
+				# emit the prior datapoint
+				if '' != last:					
+					yield DataPoint(path = last, patches = data)					
 				
-				dw = 1.0 / float(iw)
-				dh = 1.0 / float(ih)
+				# start a datapoint
+				data = []
+				last = name
 
-				labels = []
-				skipped = 0
-				for face in faces:
-					try:
-						l, t, w, h = face
-
-						def pil_to_yolo5(coords):
-							"""convert the pil-draw to yolo5 coordiantes"""
-
-							l, t, r, b = coords
-
-							w = (r - l)
-							w *= dw
-							h = (b - t) * dh
-
-							x = (l + r) * dw * 0.5
-							y = (t + b) * dh * 0.5
-
-							return(x, y, w, h)
-
-						# there may be redundant computation here
-						x, y, w, h = pil_to_yolo5( (int(l), int(t), int(l+w), int(t+h)) )
-						
-						labels.append(f'0 {x} {y} {w} {h}')
-					except AssertionError as e:
-						skipped += 1
-				if 0 != skipped:
-					print(f'skipped {group} / {fKey}\n\tnamed {path}\n\tbecause {skipped} out of {len(faces)} faces were out of bounds\n')
-					point_count -= 1
-				else:
-					# write the bytes
-					with open(jpg, 'wb') as file:
-						file.write(data)
-					
-					# write the labels
-					with open(txt, 'w') as file:
-						for label in labels:
-							file.write(label)
-							file.write('\n')
-					
+				# check the names. maybe
+				if name in seen:
+					raise Exception(
+						'the items are not grouped as i d expected'
+					)
+				seen.append(name)
+			
+			# add the patch tot he datapoint
+			data.append(
+				FacePatch(ltrb = [l, t, r, b])
+			)
 
 
-
-	print(f'prepared dataset >{group}< of {point_count} points (or more!)')
+		
+		# yield the final datapooint
+		if '' != last:					
+			yield DataPoint(path = last, patches = data)							
 
 def wider(annotations, txt):
 	"""given an annotateins file, this emits `(jpeg, [(x,y,w,h)])` data points"""
