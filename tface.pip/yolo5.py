@@ -166,108 +166,25 @@ def yolo5wider(cache, group, txt, url):
 	# download the images file
 	images = cache.download(url)
 
-	for point in wider(annotations, txt):
-		
-		patches = []
-		for l, t, w, h in point[1]:
-			r = l + w
-			b = t + h
-			patches.append(
-				FacePatch(ltrb=[l, t, r, b])
-			)
-		
-		dp = DataPoint(point[0], patches)
-		single = [dp]
-		split_export(single, 1, 0, images)
-
-		raise Exception('do thing? '+str(dp))
-	
-
-
-	raise Exception('is done?')
-
-	point_count = 0
-
-	for point in wider(annotations, txt):
-
-
-
-
-		if config.LIMIT > 0 and point_count >= config.LIMIT:
-			break
-		else:
-			point_count += 1
+	# adapt the older format (from July) to work with the newer approach (hey August)
+	def adapt():
+		for point in wider(annotations, txt):
 			
-			path, faces = point
+			patches = []
+			for l, t, w, h in point[1]:
+				r = l + w
+				b = t + h
+				patches.append(
+					FacePatch(ltrb=[l, t, r, b])
+				)
+			
+			yield DataPoint(point[0], patches)
+	split_export(
+		adapt(), 
+		1 if 'train' == group else 0,
+		1 if 'val' == group else 0,
+		images)
 
-			fKey = md5(path)
-
-			jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
-			txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
-
-			if os.path.isfile(jpg) and os.path.isfile(txt):
-				continue
-
-			ensure_directory_exists(jpg)
-			ensure_directory_exists(txt)
-
-			for data in ZipWalk(images).read(path):
-				import cv2
-				import numpy as np
-
-				# get the image dimenions - IIRC this was faster than PIL
-				# ... note the h,w ordering ... not my idea
-				ih, iw, _ = cv2.imdecode(
-					np.frombuffer(data, dtype=np.uint8),
-					cv2.IMREAD_COLOR).shape
-				
-				dw = 1.0 / float(iw)
-				dh = 1.0 / float(ih)
-
-				labels = []
-				skipped = 0
-				for face in faces:
-					try:
-						l, t, w, h = face
-
-						def pil_to_yolo5(coords):
-							"""convert the pil-draw to yolo5 coordiantes"""
-
-							l, t, r, b = coords
-
-							w = (r - l)
-							w *= dw
-							h = (b - t) * dh
-
-							x = (l + r) * dw * 0.5
-							y = (t + b) * dh * 0.5
-
-							return(x, y, w, h)
-
-						# there may be redundant computation here
-						x, y, w, h = pil_to_yolo5( (int(l), int(t), int(l+w), int(t+h)) )
-						
-						labels.append(f'0 {x} {y} {w} {h}')
-					except AssertionError as e:
-						skipped += 1
-				if 0 != skipped:
-					print(f'skipped {group} / {fKey}\n\tnamed {path}\n\tbecause {skipped} out of {len(faces)} faces were out of bounds\n')
-					point_count -= 1
-				else:
-					# write the bytes
-					with open(jpg, 'wb') as file:
-						file.write(data)
-					
-					# write the labels
-					with open(txt, 'w') as file:
-						for label in labels:
-							file.write(label)
-							file.write('\n')
-					
-
-
-
-	print(f'prepared dataset >{group}< of {point_count} points (or more!)')
 
 def wider(annotations, txt):
 	"""given an annotateins file, this emits `(jpeg, [(x,y,w,h)])` data points"""
