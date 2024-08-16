@@ -1,16 +1,17 @@
 
 from datasource import todo
 
-INPUT_SIZE = 160 # small to make training fast
+INPUT_SIZE = 80 # very small to make training fast
+# 640 (or 320?) was the default
 
 # small training limits for development time
 # how many items per dataset to extract
-LIMIT = 3
+LIMIT = 0
 
 PREVIEW = 0 != LIMIT
 
 # how many times to go over everything
-EPOCHS = 40 # this was teh recomended
+EPOCHS = 10 # 40 was recomended
 
 
 

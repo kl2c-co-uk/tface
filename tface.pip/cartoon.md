@@ -71,3 +71,9 @@ i don't know what teh value set is
 
 an unresolved issue; at least one of the WIDER images (the third one in the training set) has a cartoon in the background
 
+
+
+i'm going to retrain it from the previous BEST weights (even with the new resolution) and see ... see what's what.
+
+
+
