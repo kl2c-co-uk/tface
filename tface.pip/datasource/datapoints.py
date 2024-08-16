@@ -110,7 +110,7 @@ def split_export(datapoints, train, val, archive):
 
 						cv2.rectangle(image, start_point, end_point, color, thickness)
 
-					cv2.imshow('image with boxes', image)
+					cv2.imshow(f'{fKey} / {group}', image)
 					cv2.waitKey(0)
 					cv2.destroyAllWindows()
 

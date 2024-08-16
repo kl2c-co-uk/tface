@@ -70,16 +70,27 @@ class literator():
 		return item
 
 def random_split(data, l, r, seed = 41):
-	t = l + r
 
-	import random
-	random = random.Random(seed)
+	assert 0 < l or 0 < r
 
-	for item in data:
-		if random.randint(0, t) < l:
+	if r == 0:
+		for item in data:
 			yield (item, None)
-		else:
+	elif l == 0:
+		for item in data:
 			yield (None, item)
+	else:
+
+		t = l + r
+
+		import random
+		random = random.Random(seed)
+
+		for item in data:
+			if random.randint(0, t) < l:
+				yield (item, None)
+			else:
+				yield (None, item)
 
 
 def only(list, count):

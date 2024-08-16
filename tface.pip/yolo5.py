@@ -152,20 +152,47 @@ def export(git):
 	onnx.save(model_simp, out)
 
 def yolo5wider(cache, group, txt, url):
-	raise Exception(
-		'check the written bounding boxes ot see if that is why i did wrong'
-	)
+	"""fully extract this dataset"""
+
+
 	# download the annotations file
 	annotations = cache.download(
 		'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
 	)
+	from  datasource.datapoints import FacePatch, DataPoint
+	import datasource.datapoints as datapoints
+	from datasource.datapoints import split_export
 
 	# download the images file
 	images = cache.download(url)
 
+	for point in wider(annotations, txt):
+		
+		patches = []
+		for l, t, w, h in point[1]:
+			r = l + w
+			b = t + h
+			patches.append(
+				FacePatch(ltrb=[l, t, r, b])
+			)
+		
+		dp = DataPoint(point[0], patches)
+		single = [dp]
+		split_export(single, 1, 0, images)
+
+		raise Exception('do thing? '+str(dp))
+	
+
+
+	raise Exception('is done?')
+
 	point_count = 0
 
 	for point in wider(annotations, txt):
+
+
+
+
 		if config.LIMIT > 0 and point_count >= config.LIMIT:
 			break
 		else:
