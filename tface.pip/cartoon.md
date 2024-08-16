@@ -65,3 +65,9 @@ print('training = '+training)
 
 
 i don't know what teh value set is
+
+
+
+
+an unresolved issue; at least one of the WIDER images (the third one in the training set) has a cartoon in the background
+
