@@ -74,7 +74,7 @@ def split_export(datapoints, train, val, archive):
 		elif os.path.isfile(jpg):
 			print(f"{fKey} had a jpg - oops;" + datapoint.path + ",  " + str(is_jpg))
 			os.remove(jpg)
-		
+
 		# skip of it's present
 		import os
 		if os.path.isfile(jpg if is_jpg else png) and os.path.isfile(txt):
@@ -99,17 +99,8 @@ def split_export(datapoints, train, val, archive):
 			dw = 1.0 / float(iw)
 			dh = 1.0 / float(ih)
 			
-			# copy the image to disk
-			with open(jpg if is_jpg else png, 'wb') as file:
-				# strip the colour profile if is a png
-				# https://github.com/ultralytics/ultralytics/issues/339
-				if not is_jpg:
-					print('doing the strip ... >'+datapoint.path+'<')
-					img = Image.open(png)
-					img.info.pop('icc_profile', None)
-					img.save(png)
-
-				file.write(data)
+			# copy the image to disk - this should deal with the iCCN profile issues and corrup jpegs ... maybe ...
+			cv2.imwrite(jpg if is_jpg else png, image)
 
 			# convert/write the labels - i'm assuming that they're thte same format (but we'll see)
 			with open(txt, 'w') as file:
