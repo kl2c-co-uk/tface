@@ -1,7 +1,7 @@
 
 from datasource import todo
 
-INPUT_SIZE = 80 # very small to make training fast
+INPUT_SIZE = 96 # very small to make training fast
 # 640 (or 320?) was the default
 
 # small training limits for development time
@@ -11,7 +11,7 @@ LIMIT = 0
 PREVIEW = 0 != LIMIT
 
 # how many times to go over everything
-EPOCHS = 10 # 40 was recomended
+EPOCHS = 20 # 40 was recomended
 
 
 

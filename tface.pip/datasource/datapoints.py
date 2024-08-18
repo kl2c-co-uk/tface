@@ -42,7 +42,7 @@ class DataPoint:
 from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, random_split, only
 import datasource.config as config
 from datasource import random_split, only
-
+from PIL import Image
 
 
 def split_export(datapoints, train, val, archive):
@@ -59,12 +59,30 @@ def split_export(datapoints, train, val, archive):
 		group = 'train' if (None == datapoint[1]) else 'val'
 		datapoint = datapoint[0] if datapoint[0] else datapoint[1]
 		fKey = md5(datapoint.path)
+
+		is_jpg = datapoint.path.endswith('.jpg')
 		jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
 		txt = f'target/yolo-dataset_{config.LIMIT}/labels/{group}/{fKey}.txt'
+		png = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.png'
 
-		# TODO; skip of it's present
+		# delete wrong image file (if present)
+		import os
+		if is_jpg:
+			if os.path.isfile(png):
+				print(f"{fKey} had a png - oops;" + datapoint.path)
+				os.remove(png)
+		elif os.path.isfile(jpg):
+			print(f"{fKey} had a jpg - oops;" + datapoint.path + ",  " + str(is_jpg))
+			os.remove(jpg)
+		
+		# skip of it's present
+		import os
+		if os.path.isfile(jpg if is_jpg else png) and os.path.isfile(txt):
+			continue
+
 
 		ensure_directory_exists(jpg)
+		ensure_directory_exists(png)
 		ensure_directory_exists(txt)
 
 		for data in ZipWalk(archive).read(datapoint.path):
@@ -82,7 +100,15 @@ def split_export(datapoints, train, val, archive):
 			dh = 1.0 / float(ih)
 			
 			# copy the image to disk
-			with open(jpg, 'wb') as file:
+			with open(jpg if is_jpg else png, 'wb') as file:
+				# strip the colour profile if is a png
+				# https://github.com/ultralytics/ultralytics/issues/339
+				if not is_jpg:
+					print('doing the strip ... >'+datapoint.path+'<')
+					img = Image.open(png)
+					img.info.pop('icc_profile', None)
+					img.save(png)
+
 				file.write(data)
 
 			# convert/write the labels - i'm assuming that they're thte same format (but we'll see)
