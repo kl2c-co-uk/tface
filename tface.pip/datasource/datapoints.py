@@ -1,4 +1,6 @@
 
+from datasource import val
+
 class FacePatch:
 	def __init__(self, **kwargs):
 		# collect the key/vals
@@ -37,6 +39,10 @@ class DataPoint:
 		return txt + "}"
 	def __repr__(self):
 		return self.__str__()
+	
+	@val
+	def fKey(self):
+		return md5(self.path)
 
 
 from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, random_split, take
@@ -94,7 +100,7 @@ def process_datapoint(datapoint, data):
 	# compute some coordinates or whatever
 	group = 'train' if (None == datapoint[1]) else 'val'
 	datapoint = datapoint[0] if datapoint[0] else datapoint[1]
-	fKey = md5(datapoint.path)
+	fKey = datapoint.fKey
 
 	is_jpg = datapoint.path.endswith('.jpg')
 	jpg = f'target/yolo-dataset_{config.LIMIT}/images/{group}/{fKey}.jpg'
@@ -168,9 +174,69 @@ def process_datapoint(datapoint, data):
 
 
 def greenlist(datapoints, archive):
-	for item in datapoints:
+	import json, os
+
+	# load the greeinlisted
+	listed = {}
+	if os.path.isfile('greenlist.json'):
+		with open('greenlist.json', 'r') as f:
+			listed = json.load(f)
+
+	def loop():
+		for item in datapoints:
+			if item.fKey not in listed:
+				listed[item.fKey] = prompt_the_human(item)
+				with open('greenlist.json', 'w') as f:
+					json.dump(listed, f, indent=2) 
+
+			if listed[item.fKey]:
+				yield item
+	
+	def prompt_the_human(item):
+		import cv2
+		import zipfile
+		import numpy as np
+		import io
+
+		with zipfile.ZipFile(archive, 'r') as zip_file:
+			# Read the image file from the ZIP
+			with zip_file.open(item.path) as image_file:
+				# Convert the image file into a numpy array
+				image_data = np.frombuffer(image_file.read(), np.uint8)
+				# Decode the image data into an OpenCV image
+				image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
 
 
-		raise Exception(
-			'??? - oh do this  '+str(item)
-		)
+		# Check if the image was loaded successfully
+		if image is None:
+			raise Exception("Error: Could not load image.")
+		else:
+
+			raise Exception("draw face boxes")
+
+
+			# Display the image in a window
+			cv2.imshow(
+				'ESC - Abort, SPACE = Skip, ENTER = Accept',
+				image
+			)
+
+			accept = False
+			# Wait for a key press
+			key = cv2.waitKey(0)
+
+			# Check which key was pressed
+			if key == 32:  # Space key
+				accept = False
+			elif key == 13:  # Enter key
+				accept = True
+			elif key == 27:  # Escape key
+				exit()
+
+			# Destroy all OpenCV windows
+			cv2.destroyAllWindows()
+			return accept
+	 
+	
+	for item in loop():
+		yield item
