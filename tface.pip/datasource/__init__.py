@@ -93,15 +93,11 @@ def random_split(data, l, r, seed = 41):
 				yield (None, item)
 
 
-def only(list, count):
-	if count <= 0:
-		for item in list:
+def take(list, count):
+	for item in list:
+		if 0 < count:
 			yield item
-	else:
-		for item in list:
-			if 0 < count:
-				yield item
-				count -= 1
+			count -= 1
 
 
 

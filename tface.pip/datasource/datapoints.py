@@ -39,9 +39,8 @@ class DataPoint:
 		return self.__str__()
 
 
-from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, random_split, only
+from datasource import Blurb, Cache, md5, ZipWalk, ensure_directory_exists, random_split, take
 import datasource.config as config
-from datasource import random_split, only
 from PIL import Image
 
 
@@ -51,9 +50,44 @@ def split_export(datapoints, train, val, archive):
 	split = random_split(datapoints, train, val)
 	
 	# limit ourselves (for testing)
-	todo = only(split, config.LIMIT)
+	todo = take(split, config.LIMIT) if config.LIMIT > 0 else split
 
-	for datapoint in todo:
+	# we'll iterate through the list at least once - so - let's stabilise it
+	todo = list(todo)
+
+	
+	import zipfile
+	with zipfile.ZipFile(archive, 'r') as file:
+		for info in file.infolist():			
+			path = info.filename
+
+			if path.endswith('/'):
+				continue
+
+			print(
+				'path = '+path
+			)
+
+			for item in todo:
+				assert item in todo
+				
+				name = (item[0] if not item[1] else item[1]).path
+				
+				if path == name:
+					raise Exception('??? item = '+str(item)	)
+				elif path.endswith(name):
+					raise Exception(
+						f'there is a partial match on >{name}< for full path >{path}<'
+					)
+
+
+
+			raise Exception('??? name = '+name)
+	raise Exception('???')
+def process_datapoint(datapoint, data):
+	
+	# for datapoint in todo:
+	if True:
 
 		# compute some coordinates or whatever
 		group = 'train' if (None == datapoint[1]) else 'val'
@@ -78,14 +112,15 @@ def split_export(datapoints, train, val, archive):
 		# skip of it's present
 		import os
 		if os.path.isfile(jpg if is_jpg else png) and os.path.isfile(txt):
-			continue
+			return
 
 
 		ensure_directory_exists(jpg)
 		ensure_directory_exists(png)
 		ensure_directory_exists(txt)
 
-		for data in ZipWalk(archive).read(datapoint.path):
+		# for data in ZipWalk(archive).read(datapoint.path):
+		if True:
 			import cv2
 			import numpy as np
 
