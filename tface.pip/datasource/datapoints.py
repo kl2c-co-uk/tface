@@ -55,45 +55,31 @@ def split_export(datapoints, train, val, archive):
 	# we'll iterate through the list at least once - so - let's stabilise it
 	todo = list(todo)
 
+	want = {}
+	for item in todo:
+		name = (item[0] if not item[1] else item[1]).path
+		assert name not in want
+		want[name] = item
 	
 	import zipfile
 	with zipfile.ZipFile(archive, 'r') as file:
 		for info in file.infolist():
 			path = info.filename
 
-			if path.endswith('/'):
-				continue
-
-			print(
-				'path = '+path
-			)
-			for item in todo:
-				assert item in todo
+			if path in want:
+				item = want[path]
 
 				name = (item[0] if not item[1] else item[1]).path
-				
-				if path == name:
+				want.pop(name)
 
-					was = len(todo)
-					todo.remove(item)
-					now = len(todo)
-
-					assert was == (now+1)
-					assert not( item in todo)
+				process_datapoint(
+					item,
+					file.read(info)
+				)
+				print('there are ' + str(len(want)) + ' items and i just got \t'+name)
 
 
-					process_datapoint(
-						item,
-						file.read(info)
-					)
-					print('peped '+name)
-					break
 
-
-				elif path.endswith(name):
-					raise Exception(
-						f'there is a partial match on >{name}< for full path >{path}<'
-					)
 def process_datapoint(datapoint, data):
 	
 	# for datapoint in todo:
