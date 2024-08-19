@@ -24,15 +24,6 @@ def main(args):
 	# build the datasets
 	if args.extract:
 
-		# do the newer cartoon ones
-		split_export(
-			i_cartoon_datapoints(cache),
-			8, 1,
-			cache.download(
-				# training = target/cb67961c4ba344c84b3e5442206436ac
-				'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
-			)
-		)
 		yolo5wider(cache, 'train',
 			'wider_face_train_bbx_gt.txt',
 			'https://drive.usercontent.google.com/download?id=15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M&export=download&authuser=0&confirm=t&uuid=6d1b1482-0707-4fee-aca1-0ea41ba1ecb6&at=APZUnTX8U1BtsQRxJTqGH5qAbkFf%3A1719226478335',
@@ -42,6 +33,16 @@ def main(args):
 			'wider_face_val_bbx_gt.txt',
 			'https://drive.usercontent.google.com/download?id=1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q&export=download&authuser=0&confirm=t&uuid=8afa3062-ddbc-44e5-83fd-c4e1e2965513&at=APZUnTUX4c1Le0kpmfMNJ6i3cIJh%3A1719227725353',
 		)
+		# do the newer cartoon ones
+		split_export(
+			i_cartoon_datapoints(cache),
+			8, 1,
+			cache.download(
+				# training = target/cb67961c4ba344c84b3e5442206436ac
+				'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
+			)
+		)
+
 
 	if args.clone:
 		git = yolo5clone()
@@ -175,6 +176,7 @@ def yolo5wider(cache, group, txt, url):
 
 	# download the images file
 	images = cache.download(url)
+	print(f"the archive at {url} became {images}")
 
 	# adapt the older format (from July) to work with the newer approach (hey August)
 	def adapt():
@@ -187,8 +189,10 @@ def yolo5wider(cache, group, txt, url):
 				patches.append(
 					FacePatch(ltrb=[l, t, r, b])
 				)
-			
-			yield DataPoint(point[0], patches)
+
+			yield DataPoint(
+				f'WIDER_{group}/images/{point[0]}',
+				patches)
 	split_export(
 		adapt(), 
 		1 if 'train' == group else 0,
@@ -220,7 +224,11 @@ def i_cartoon_datapoints(cache):
 
 				# emit the prior datapoint
 				if '' != last:					
-					yield DataPoint(path = last, patches = data)					
+					yield DataPoint(
+						# we're doing the full path now for my sanity
+						path = f'personai_icartoonface_dettrain/icartoonface_dettrain/{last}',
+						patches = data
+					)
 				
 				# start a datapoint
 				data = []
