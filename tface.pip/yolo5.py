@@ -223,7 +223,11 @@ def i_cartoon_datapoints(cache):
 
 				# emit the prior datapoint
 				if '' != last:					
-					yield DataPoint(path = last, patches = data)					
+					yield DataPoint(
+						# we're doing the full path now for my sanity
+						path = f'personai_icartoonface_dettrain/icartoonface_dettrain/{last}',
+						patches = data
+					)
 				
 				# start a datapoint
 				data = []

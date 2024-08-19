@@ -58,7 +58,7 @@ def split_export(datapoints, train, val, archive):
 	
 	import zipfile
 	with zipfile.ZipFile(archive, 'r') as file:
-		for info in file.infolist():			
+		for info in file.infolist():
 			path = info.filename
 
 			if path.endswith('/'):
@@ -67,23 +67,33 @@ def split_export(datapoints, train, val, archive):
 			print(
 				'path = '+path
 			)
-
 			for item in todo:
 				assert item in todo
-				
+
 				name = (item[0] if not item[1] else item[1]).path
 				
 				if path == name:
-					raise Exception('??? item = '+str(item)	)
+
+					was = len(todo)
+					todo.remove(item)
+					now = len(todo)
+
+					assert was == (now+1)
+					assert not( item in todo)
+
+
+					process_datapoint(
+						item,
+						file.read(info)
+					)
+					print('peped '+name)
+					break
+
+
 				elif path.endswith(name):
 					raise Exception(
 						f'there is a partial match on >{name}< for full path >{path}<'
 					)
-
-
-
-			raise Exception('??? name = '+name)
-	raise Exception('???')
 def process_datapoint(datapoint, data):
 	
 	# for datapoint in todo:
