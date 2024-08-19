@@ -165,3 +165,12 @@ def process_datapoint(datapoint, data):
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
+
+
+def greenlist(datapoints, archive):
+	for item in datapoints:
+
+
+		raise Exception(
+			'??? - oh do this  '+str(item)
+		)
