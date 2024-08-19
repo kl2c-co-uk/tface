@@ -212,12 +212,19 @@ def greenlist(datapoints, archive):
 			raise Exception("Error: Could not load image.")
 		else:
 
-			raise Exception("draw face boxes")
+			for face in item.patches:
+				# Draw a rectangle on the image
+				start_point = (face.l, face.t)  # Top-left corner
+				end_point = (face.r, face.b)  # Bottom-right corner
+				color = (0, 255, 0)  # Green color in BGR
+				thickness = 3  # Thickness of the rectangle border
+
+				cv2.rectangle(image, start_point, end_point, color, thickness)
 
 
 			# Display the image in a window
 			cv2.imshow(
-				'ESC - Abort, SPACE = Skip, ENTER = Accept',
+				'ESC - Abort, SPACE = Reject, ENTER = Accept',
 				image
 			)
 
