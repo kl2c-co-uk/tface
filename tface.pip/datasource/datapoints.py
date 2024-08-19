@@ -185,9 +185,12 @@ def greenlist(datapoints, archive):
 	def loop():
 		for item in datapoints:
 			if item.fKey not in listed:
-				listed[item.fKey] = prompt_the_human(item)
-				with open('greenlist.json', 'w') as f:
-					json.dump(listed, f, indent=2) 
+				if not archive:
+					continue
+				else:
+					listed[item.fKey] = prompt_the_human(item)
+					with open('greenlist.json', 'w') as f:
+						json.dump(listed, f, indent=2) 
 
 			if listed[item.fKey]:
 				yield item
@@ -196,7 +199,6 @@ def greenlist(datapoints, archive):
 		import cv2
 		import zipfile
 		import numpy as np
-		import io
 
 		with zipfile.ZipFile(archive, 'r') as zip_file:
 			# Read the image file from the ZIP
