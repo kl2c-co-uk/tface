@@ -196,7 +196,7 @@ def greenlist(datapoints, archive):
 				else:
 					listed[item.fKey] = prompt_the_human(item)
 					with open('greenlist.txt', 'a') as f:
-						f.write(item.fKey + '=' + ('t' if listed[item.fKey] else 'f'))
+						f.write(item.fKey + '=' + ('t\n' if listed[item.fKey] else 'f\n'))
 
 			if listed[item.fKey]:
 				yield item
