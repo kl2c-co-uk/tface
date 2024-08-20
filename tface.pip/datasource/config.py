@@ -6,7 +6,7 @@ INPUT_SIZE = 96 # very small to make training fast
 
 # small training limits for development time
 # how many items per dataset to extract
-LIMIT = 1500
+LIMIT = 0
 
 
 AUDIT = False # do you want to audio the/some cartoon images?
@@ -14,7 +14,7 @@ AUDIT = False # do you want to audio the/some cartoon images?
 PREVIEW = False #0 != LIMIT
 
 # how many times to go over everything
-EPOCHS = 2 # 40 was recomended
+EPOCHS = 10 # 40 was recomended
 
 
 

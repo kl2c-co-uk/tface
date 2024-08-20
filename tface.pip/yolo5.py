@@ -32,7 +32,7 @@ def main(args):
 		split_export(
 			datapoints.greenlist(
 				i_cartoon_datapoints(cache),
-				cartoon_archive
+				cartoon_archive if config.AUDIT else None
 			),
 			8, 1,
 			cartoon_archive
