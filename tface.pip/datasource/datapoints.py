@@ -174,13 +174,19 @@ def process_datapoint(datapoint, data):
 
 
 def greenlist(datapoints, archive):
-	import json, os
+	import os
 
 	# load the greeinlisted
 	listed = {}
-	if os.path.isfile('greenlist.json'):
-		with open('greenlist.json', 'r') as f:
-			listed = json.load(f)
+	assert os.path.isfile('greenlist.txt')
+	with open('greenlist.txt', 'r') as f:
+		for line in f.readlines():
+			line = line.strip()
+			if '' ==line:
+				continue
+			key, value = line.strip().split('=')
+			assert ('t' == value) or ('f' == value)
+			listed[key] = 't' == value
 
 	def loop():
 		for item in datapoints:
@@ -189,8 +195,8 @@ def greenlist(datapoints, archive):
 					continue
 				else:
 					listed[item.fKey] = prompt_the_human(item)
-					with open('greenlist.json', 'w') as f:
-						json.dump(listed, f, indent=2) 
+					with open('greenlist.txt', 'a') as f:
+						f.write(item.fKey + '=' + ('t' if listed[item.fKey] else 'f'))
 
 			if listed[item.fKey]:
 				yield item
