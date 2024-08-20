@@ -1,25 +1,46 @@
 
 from datasource import todo
 
+# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp/weights/best.pt" && shutdown /s /t 180
+
+
+# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp9/weights/best.pt" && shutdown /s /t 180
+#
+# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp10/weights/best.pt" && shutdown /s /t 180
+# 
+
 INPUT_SIZE = 96 # very small to make training fast
+BATCH_SIZE = 192
+
+# 96 and 16 = 0.24G
+# 96 and 50 = 0.42G
+# 96 and 128 = 0.814G
+# 96 and 256 =? =2.52G
+# 96 and 192 =1.2G
+
 # 640 (or 320?) was the default
+# RTFM; -1 batch size handles it automatically
+
+
+
 
 # small training limits for development time
 # how many items per dataset to extract
 LIMIT = 0
 
 
-AUDIT = False # do you want to audio the/some cartoon images?
+AUDIT = False # do you want to audit the/some cartoon images?
 
 PREVIEW = False #0 != LIMIT
 
 # how many times to go over everything
-EPOCHS = 10 # 40 was recomended
+EPOCHS = 5 # 40 was recomended
 
 
 
-# RTFM; -1 batch size handles it automatically
-BATCH_SIZE = -1
+
+
+
 
 
 # small enough to fit in the k620
