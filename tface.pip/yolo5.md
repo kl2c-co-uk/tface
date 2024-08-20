@@ -40,6 +40,7 @@ pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requi
 pip install -r yolo5.txt
 ```
 
+
 > the `target/` dir should be ignored by version control.  it gets really big. 
 
 After this running `python yolo5.py` will run the trianing thing.
