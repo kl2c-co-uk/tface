@@ -7,6 +7,11 @@ from datasource import todo
 # python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp11/weights/best.pt" && shutdown /s /t 180
 # 
 
+# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp12/weights/best.pt" && shutdown /s /t 180
+# 20 epoch
+# 128 input size for better accuracy
+# 128 batch size to avoid crashes
+
 INPUT_SIZE = 96 # very small to make training fast
 BATCH_SIZE = 192
 
