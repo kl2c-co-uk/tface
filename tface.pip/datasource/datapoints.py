@@ -192,6 +192,8 @@ def greenlist(datapoints, archive):
 		for item in datapoints:
 			if item.fKey not in listed:
 				if not archive:
+					if config.GREENLIST_DEFAULT_INCLUE:
+						yield item
 					continue
 				else:
 					listed[item.fKey] = prompt_the_human(item)
