@@ -5,6 +5,20 @@ retring the no-cartoon settings with cartoons
 
 > python yolo5.py --weights "C:/Users/peter/Desktop/tface-train-nocartoon/tface.pip/target/yolov5/runs/train/exp5/weights/best.pt" && shutdown /s /t 180
 
+.. this finished around 9pm and ... works ... mostly ... it finds the human and sometimes the blue cluies animals.
+
+`yoloface.2024-08-21.192-9pm.onnx`
+
+So now I want to train for another 40 iterations picking up where this left off.
+Might be an idea to audit more cartoons.
+
+> python yolo5.py --weights "C:/Users/peter/Desktop/tface-train-nocartoon/tface.pip/target/yolov5/runs/train/exp6/weights/best.pt" && shutdown /s /t 180
+
+memory usage is ...
+```
+192x48 = 1.3G (in the first ones)
+192x64 = 1.7G on epoc 1/39 so i assume it'll stay under 3G
+```
 
 ----
 

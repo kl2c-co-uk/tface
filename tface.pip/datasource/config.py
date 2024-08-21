@@ -11,9 +11,13 @@ from datasource import todo, Blurb
 # 72 batch size to avoid crashes - based on napkin-math; this should stay under 2G
 
 
+# 192x48 = 1.3G (in the first ones)
+# 192x64 = 1.7G on epoc 1/39 so i assume it'll stay under 3G
+
 INPUT_SIZE = 192
-BATCH_SIZE = 48
-EPOCHS = 10 # 40 was recomended
+BATCH_SIZE = 64
+
+EPOCHS = 40 # 40 was recomended
 
 
 
