@@ -3,11 +3,9 @@ from datasource import todo, Blurb
 
 #
 #
-# next one
-# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp11/weights/best.pt" && shutdown /s /t 180
+# retrin the no-cartoon one with cartoons ... sorry
+#  python yolo5.py --weights "C:/Users/peter/Desktop/tface-train-nocartoon/tface.pip/target/yolov5/runs/train/exp5/weights/best.pt" && shutdown /s /t 180
 # 
-
-# python yolo5.py --weights "C:/Users/peter/Desktop/tface-train/tface.pip/target/yolov5/runs/train/exp12/weights/best.pt" && shutdown /s /t 180
 # 20 epoch
 # 128 input size for better accuracy
 # 72 batch size to avoid crashes - based on napkin-math; this should stay under 2G
@@ -15,7 +13,7 @@ from datasource import todo, Blurb
 
 INPUT_SIZE = 192
 BATCH_SIZE = 48
-EPOCHS = 2 # 40 was recomended
+EPOCHS = 10 # 40 was recomended
 
 
 
@@ -26,7 +24,7 @@ EPOCHS = 2 # 40 was recomended
 DATASETS = Blurb(
     WIDER_train = True,
     WIDER_val = True,
-    iCartoon = False,
+    iCartoon = True,
 )
 
 
@@ -36,7 +34,7 @@ LIMIT = 0
 
 
 
-GREENLIST_DEFAULT_INCLUE = True # if an image isn't in the green/red list - do you want it included anyway?
+GREENLIST_DEFAULT_INCLUE = False # if an image isn't in the green/red list - do you want it included anyway?
 AUDIT = False # do you want to audit the/some cartoon images?
 
 PREVIEW = False #0 != LIMIT

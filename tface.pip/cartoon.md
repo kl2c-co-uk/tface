@@ -1,5 +1,23 @@
 
 
+retring the no-cartoon settings with cartoons
+
+
+> python yolo5.py --weights "C:/Users/peter/Desktop/tface-train-nocartoon/tface.pip/target/yolov5/runs/train/exp5/weights/best.pt" && shutdown /s /t 180
+
+
+----
+
+
+
+
+
+
+
+
+
+
+
 https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=cartoon+face+detection&oq=cartoon+face
 
 
