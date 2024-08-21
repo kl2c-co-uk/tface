@@ -1,5 +1,5 @@
 
-from datasource import todo
+from datasource import todo, Blurb
 
 #
 #
@@ -12,22 +12,22 @@ from datasource import todo
 # 128 input size for better accuracy
 # 72 batch size to avoid crashes - based on napkin-math; this should stay under 2G
 
-INPUT_SIZE = 128 #
-BATCH_SIZE = 72 # 
 
-# 96 and 16 = 0.24G
-# 96 and 50 = 0.42G
-# 96 and 128 = 0.814G
-# 96 and 256 =? =2.52G
-# 96 and 192    =1.2G     <-- seems to be best match
-#               =1.98G at the end; later epochs take more RAM and I don't know why
+INPUT_SIZE = 192
+BATCH_SIZE = 48
+EPOCHS = 2 # 40 was recomended
 
-# 128,72 =
+
 
 # 640 (or 320?) was the default
-# RTFM; -1 batch size handles it automatically
+# RTFM; -1 batch size handles it automatically ... but also that crashed my PC a lot
 
 
+DATASETS = Blurb(
+    WIDER_train = True,
+    WIDER_val = True,
+    iCartoon = False,
+)
 
 
 # small training limits for development time
@@ -41,24 +41,8 @@ AUDIT = False # do you want to audit the/some cartoon images?
 
 PREVIEW = False #0 != LIMIT
 
-# how many times to go over everything
-EPOCHS = 5 # 40 was recomended
 
 
-
-
-
-
-
-
-# small enough to fit in the k620
-
-
-
-# ... bigger sizes are probably fine there too ...
-# 16 = 3.68G
-# 12 = 3G?
-# ... bugger batches finish epochs faster, but, need more GPU memeory ...
 
 
 # oh look; we can change the value for the export?
