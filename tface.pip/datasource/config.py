@@ -15,7 +15,7 @@ from datasource import todo, Blurb
 # 192x64 = 1.7G on epoc 1/39 so i assume it'll stay under 3G
 
 INPUT_SIZE = 192
-BATCH_SIZE = 64
+BATCH_SIZE = 50
 
 EPOCHS = 40 # 40 was recomended
 

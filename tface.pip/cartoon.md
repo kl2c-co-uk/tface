@@ -20,6 +20,9 @@ memory usage is ...
 192x64 = 1.7G on epoc 1/39 so i assume it'll stay under 3G
 ```
 
+... whoops that crashed; 192x50 it is!
+
+
 ----
 
 
