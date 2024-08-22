@@ -86,7 +86,10 @@ def split_export(datapoints, train, val, archive):
 	# check to be sure that we cound all the datapoints we wanted
 	failed = 0
 	for name in want:
-		print(f"FAILED to find {name}")
+		item = want[name]
+		item = (item[0] if not item[1] else item[1])
+
+		print(f"FAILED to find {name}\n\t{item.fKey}")
 		failed += 1
 	if 0 != failed:
 		raise Exception(
@@ -192,6 +195,8 @@ def greenlist(datapoints, archive):
 		for item in datapoints:
 			if item.fKey not in listed:
 				if not archive:
+					if config.GREENLIST_DEFAULT_INCLUE:
+						yield item
 					continue
 				else:
 					listed[item.fKey] = prompt_the_human(item)
