@@ -23,6 +23,16 @@ memory usage is ...
 ... whoops that crashed; 192x50 it is!
 
 
+...
+
+so that worked well and i think there's an improvement
+
+i seem to be able to audio 50 images in 3.15 minues. there are 50k images, 47k left to audit, 3055 minutes or 50 hours.
+
+i'm not finishing this, and, "default include" would dilute the work done so far that lead to the current success.
+
+for now; audit images when i can, and, retrain nightly. it would laso be nice to increase the resolution of the network, but, shrinking it had such terrible consequences.
+
 ----
 
 
