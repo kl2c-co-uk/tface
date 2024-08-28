@@ -1,4 +1,12 @@
 
+audit;
+- enbsure audit is enabled in config
+- enable iCartoon (and disable WIDERs)
+- activate your envornment
+- `python yolo5.py -extract` to do the minimal
+- wait and check for the prompt window
+
+...
 
 retring the no-cartoon settings with cartoons
 
