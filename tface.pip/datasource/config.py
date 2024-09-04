@@ -17,7 +17,7 @@ from datasource import todo, Blurb
 INPUT_SIZE = 192
 BATCH_SIZE = 50
 
-EPOCHS = 40 # 40 was recomended
+EPOCHS = 60 # 40 was recomended
 
 
 
@@ -38,9 +38,8 @@ LIMIT = 0
 
 
 
-GREENLIST_DEFAULT_INCLUE = False # if an image isn't in the green/red list - do you want it included anyway?
 AUDIT = True # do you want to audit the/some cartoon images?
-
+GREENLIST_DEFAULT_INCLUE = False # if an image isn't in the green/red list - do you want it included anyway?
 PREVIEW = False #0 != LIMIT
 
 
