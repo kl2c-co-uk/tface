@@ -2,6 +2,14 @@
 from datasource import todo, Blurb
 
 #
+
+
+# thrusday; python yolo5.py && shutdown /s /t 180
+
+
+# wednesday; python yolo5.py --weights "G:/My Drive/kl2c/archived-configurations/2024-08-30.that-one-thar-ran-until-noon.pt" && shutdown /s /t 180
+
+
 #
 # retrin the no-cartoon one with cartoons ... sorry
 #  python yolo5.py --weights "C:/Users/peter/Desktop/tface-train-nocartoon/tface.pip/target/yolov5/runs/train/exp5/weights/best.pt" && shutdown /s /t 180
@@ -17,7 +25,7 @@ from datasource import todo, Blurb
 INPUT_SIZE = 192
 BATCH_SIZE = 50
 
-EPOCHS = 60 # 40 was recomended
+EPOCHS = 80 # 40 was recomended. 80 for 
 
 
 
@@ -26,8 +34,8 @@ EPOCHS = 60 # 40 was recomended
 
 
 DATASETS = Blurb(
-    WIDER_train = False,
-    WIDER_val = False,
+    WIDER_train = True,
+    WIDER_val = True,
     iCartoon = True,
 )
 
@@ -38,7 +46,7 @@ LIMIT = 0
 
 
 
-AUDIT = True # do you want to audit the/some cartoon images?
+AUDIT = False # do you want to audit the/some cartoon images?
 GREENLIST_DEFAULT_INCLUE = False # if an image isn't in the green/red list - do you want it included anyway?
 PREVIEW = False #0 != LIMIT
 
