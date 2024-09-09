@@ -46,7 +46,6 @@ LIMIT = 0
 
 
 
-AUDIT = False # do you want to audit the/some cartoon images?
 GREENLIST_DEFAULT_INCLUE = False # if an image isn't in the green/red list - do you want it included anyway?
 PREVIEW = False #0 != LIMIT
 

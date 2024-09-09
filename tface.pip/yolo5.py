@@ -20,6 +20,26 @@ def main(args):
 
 	cache = Cache('target/')
 
+	# this used to do the audit as part of the normal flow - but - that's dumb so it's separate now
+
+	
+	##
+	# audit the cartoons then just exit
+	if args.audit:
+		cartoon_archive = cache.download(
+			# training = target/cb67961c4ba344c84b3e5442206436ac
+			'https://drive.usercontent.google.com/download?id=1xXpE0qs2lONWKL5dqaFxqlJ_t5-glNpg&export=download&authuser=0&confirm=t&uuid=f6f6beb7-4c3b-40a7-b52d-12c62c2e84fe&at=APZUnTV9QwxtWfOsgjgqW-7icoaM:1723671279280'
+		)
+
+		# we have to do something to crawl through that yield statement
+		for _ in datapoints.greenlist(
+			i_cartoon_datapoints(cache),
+			cartoon_archive
+		):
+			pass
+		exit()
+
+
 	##
 	# build the datasets
 	if args.extract:
@@ -33,7 +53,9 @@ def main(args):
 			split_export(
 				datapoints.greenlist(
 					i_cartoon_datapoints(cache),
-					cartoon_archive if config.AUDIT else None
+
+					#
+					None
 				),
 				8, 1,
 				cartoon_archive
@@ -299,6 +321,7 @@ if '__main__' == __name__:
 	import argparse
 	parser = argparse.ArgumentParser(description="YOLOv5 Face Detector (maybe)")
 	parser.add_argument('-extract', action='store_true', help='only do the extraction step')
+	parser.add_argument('-audit', action='store_true', help='audit the cartoon images to find good/bad datapoints')
 
 	parser.add_argument('--weights', type=str, help='Path to the .pt file i should resume/start from')
 
@@ -306,35 +329,43 @@ if '__main__' == __name__:
 
 	##
 	# check the resume paramter
-	if not args.weights:
-		print('training from scratch')
+	if args.audit:
+		print('only doing an audit')
+		args = Blurb(audit=True)
 	else:
-		# nodemon --ignore target/ yolo5.py --weights "G:/My Drive/kl2c/best.pt"
+		if args.extract:
+			print('only extracting the dataset')
+			args = Blurb(
+				# weights = args.weights,
+				extract = True,
+				clone = False,
+				train = False,
+				export = False,
+				audit=False
+			)
+		else:
+			if not args.weights:
+				print('training from scratch')
+			else:
+				# nodemon --ignore target/ yolo5.py --weights "G:/My Drive/kl2c/best.pt"
 
-		if os.path.isfile(args.weights):
-			was = args.weights
-			args.weights = args.weights.replace('\\','/')
-			args.weights = os.path.abspath(args.weights)
-			args.weights = args.weights.replace('\\','/')
+				if os.path.isfile(args.weights):
+					was = args.weights
+					args.weights = args.weights.replace('\\','/')
+					args.weights = os.path.abspath(args.weights)
+					args.weights = args.weights.replace('\\','/')
 
-			print(f"resuming/retraining from `{args.weights}`")
-			if args.weights != was:
-				print(f"  (... which was {was})")
+					print(f"resuming/retraining from `{args.weights}`")
+					if args.weights != was:
+						print(f"  (... which was {was})")
 
-	if args.extract:
-		args = Blurb(
-			weights = args.weights,
-			extract = True,
-			clone = False,
-			train = False,
-			export = False
-		)
-	else:
-		args = Blurb(
-			weights = args.weights,
-			extract = True,
-			clone = True,
-			train = True,
-			export = True
-		)
+
+			args = Blurb(
+				weights = args.weights,
+				extract = True,
+				clone = True,
+				train = True,
+				export = True,
+				audit=False
+			)
 	main(args)
