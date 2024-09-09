@@ -111,15 +111,17 @@ def train(args, git):
 	yaml = os.path.abspath('target/yolo5.yaml')
 	with open(yaml, 'w') as file:
 		import textwrap
+
 		file.write(
 			textwrap.dedent(f"""\
 				train: {os.path.abspath(f'target/yolo-dataset_{config.LIMIT}/images/train')}
 				val: {os.path.abspath(f'target/yolo-dataset_{config.LIMIT}/images/val')}
-				nc: 1  # number of classes
+				nc: {len(config.CLASSES)}  # number of classes
 				names:
-				- face
 			""")
 		)
+		for kk in config.CLASSES:
+			file.write('- ' + kk + '\n')
 
 	weights = args.weights or 'yolov5s.pt'
 	##
@@ -217,7 +219,9 @@ def yolo5wider(cache, group, txt, url):
 				r = l + w
 				b = t + h
 				patches.append(
-					FacePatch(ltrb=[l, t, r, b])
+					FacePatch(
+						label='wider_face',
+						ltrb=[l, t, r, b])
 				)
 
 			yield DataPoint(
@@ -273,7 +277,10 @@ def i_cartoon_datapoints(cache):
 			
 			# add the patch tot he datapoint
 			data.append(
-				FacePatch(ltrb = [l, t, r, b])
+				FacePatch(
+					label='cartoon_face',
+			  		ltrb = [l, t, r, b]
+				)
 			)
 
 

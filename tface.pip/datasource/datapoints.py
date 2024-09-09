@@ -2,7 +2,17 @@
 from datasource import val
 
 class FacePatch:
-	def __init__(self, **kwargs):
+	def __init__(self, label, **kwargs):
+		# check the label
+		if type(label) == type(''):
+			assert label in config.CLASSES
+			self.label = label
+		else:
+			raise Exception(
+				'label these with strings'
+			)
+
+
 		# collect the key/vals
 		data = {}	
 		for key, value in kwargs.items():
@@ -14,6 +24,9 @@ class FacePatch:
 
 			if type([]) == type(data):
 				self.l, self.t, self.r, self.b = map(int, data)
+
+				
+
 				return
 		
 		raise Exception('error; unhandled case for face pathc')
@@ -149,11 +162,12 @@ def process_datapoint(datapoint, data):
 	with open(txt, 'w') as file:
 		labels = []
 		for face in datapoint.patches:
+			kk = config.CLASSES.index(face.label)
 			l = face.l * dw
 			t = face.t * dh
 			r = face.r * dw
 			b = face.b * dh
-			label = (f'0 {l} {t} {r} {b}\n')
+			label = (f'{kk} {l} {t} {r} {b}')
 			labels.append(label)
 			file.write(label + '\n')
 

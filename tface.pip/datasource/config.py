@@ -27,6 +27,10 @@ BATCH_SIZE = 50
 
 EPOCHS = 80 # 40 was recomended. 80 for 
 
+CLASSES = [
+    'wider_face',
+    'cartoon_face',
+]
 
 
 # 640 (or 320?) was the default
@@ -42,7 +46,7 @@ DATASETS = Blurb(
 
 # small training limits for development time
 # how many items per dataset to extract
-LIMIT = 0
+LIMIT = 10
 
 
 
