@@ -55,7 +55,7 @@ public class TensorScript : MonoBehaviour
 		// Convert the webcam texture to a Tensor
 		Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
 
-		var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold, NmsThreshold, ConfidenceThreshold);
+		var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold);
 
 		// create thge output texture if we need to
 		if (null == outputTexture2D)

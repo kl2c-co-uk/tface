@@ -39,7 +39,7 @@ public class OterhTest : MonoBehaviour
 		var outTexture = new Texture2D(inputRenderTexture.width, inputRenderTexture.height);
 		otherResult.mainTexture = outTexture;
 
-		var detectionResults = yoloPipe.Execute(inputRenderTexture, DetectionThreshold, NmsThreshold, ConfidenceThreshold);
+		var detectionResults = yoloPipe.Execute(inputRenderTexture, DetectionThreshold);
 
 		// fill it randomly
 		outTexture.Confetti(detectionResults);

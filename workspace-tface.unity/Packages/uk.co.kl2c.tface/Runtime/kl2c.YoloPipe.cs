@@ -32,14 +32,26 @@ namespace kl2c
 			Debug.Assert(3 == runtimeModel.inputs[0].shape[7]);
 
 			// something(s) in here should dictate the "6" size, but, i dun't know what
-		}
+			string output = "outputs (" + runtimeModel.outputs.Count + ")";
+			foreach (var o in runtimeModel.outputs)
+				output += "\n\t-" + o;
 
-		public IEnumerable<Rect> Execute(
-			Texture inputTexture,
-			float detectionThreshold,
-			float nmsThreshold,
-			float confidenceThreshold)
+			var shape = runtimeModel.GetShapeByName(runtimeModel.outputs[0]).Value.ToArray();
+			Debug.Assert(8 == shape.Length);
+			for (int i = 0; i < 6; ++i)
+				Debug.Assert(1 == shape[i]);
+
+			labelCount = shape[6] - 5;
+			Debug.Assert(1 <= labelCount);
+			Debug.Assert(2268 == shape[7]);
+
+		}
+		int labelCount;
+
+		public IEnumerable<Rect> Execute(Texture inputTexture, float threshold, float[] confidenceThreshold = null)
 		{
+			if (null != confidenceThreshold)
+				Debug.Assert(confidenceThreshold.Length == labelCount);
 			Tensor inputTensor = new Tensor(inputTexture, channels: 3);
 
 			// Execute the model with the input tensor
@@ -50,9 +62,14 @@ namespace kl2c
 
 			// 
 			var tree =
-				Transpose(6, outputTensor)
-					.Where(p => p.Item2 > detectionThreshold)
-					.Where(p => p.Item3[0] > confidenceThreshold)
+				Transpose(5 + labelCount, outputTensor)
+					.Where(p => p.Item2 >= threshold)
+					.Where(p =>
+					{
+						var confidenceValue = p.Item3;
+						Debug.Assert(confidenceValue.Length == labelCount);
+						return (Enumerable.Range(0, labelCount).Where(i => confidenceValue[i] >= (null == confidenceThreshold ? threshold : confidenceThreshold[i])).ToList().Count > 0);
+					})
 					.Select(p => p.Item1)
 					.Select(patch =>
 					{
