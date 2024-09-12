@@ -55,7 +55,8 @@ public class TensorScript : MonoBehaviour
 		// Convert the webcam texture to a Tensor
 		Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
 
-		var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold);
+		var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold).ToList();
+		Debug.Log(detectionResults.Count);
 
 		// create thge output texture if we need to
 		if (null == outputTexture2D)
@@ -63,8 +64,8 @@ public class TensorScript : MonoBehaviour
 
 		// fill it randomly
 		outputTexture2D.Fill(UnityEngine.Color.black);
-		//outputTexture2D.Confetti(detectionResults);
-		outputTexture2D.FaceOvals(detectionResults);
+		outputTexture2D.Confetti(detectionResults);
+		// outputTexture2D.FaceOvals(detectionResults);
 
 		// push the changes to the GPU
 		outputTexture2D.Apply();

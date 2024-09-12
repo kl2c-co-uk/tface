@@ -422,6 +422,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rawImage: {fileID: 260750606}
+  deviceName: Logi C270 HD WebCam
 --- !u!4 &543840718
 Transform:
   m_ObjectHideFlags: 0

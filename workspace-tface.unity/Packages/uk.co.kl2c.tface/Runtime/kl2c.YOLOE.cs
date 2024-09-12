@@ -64,7 +64,6 @@ namespace kl2c
 
 		public static IEnumerable<I> Drop<I>(this IEnumerable<I> l, int i)
 		{
-
 			foreach (var e in l)
 				if (i > 0)
 					i--;
@@ -129,6 +128,30 @@ namespace kl2c
 			});
 		}
 
+		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces)
+		{
+			return faces.NonMaxSuppression(p => p.confidence.Max());
+		}
+
+		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces, System.Func<YoloPipe.YoloFace, float> weight)
+		{
+			var seen = new HashSet<Rect>();
+
+			foreach (var face in faces.OrderBy(p => -weight(p)))
+			{
+				var fail = true;
+
+				foreach (var used in seen)
+					if (fail = used.Overlaps(face.patch))
+						break;
+
+				if (fail)
+					continue;
+
+				seen.Add(face.patch);
+				yield return face;
+			}
+		}
 
 
 		/// <summary>
