@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Barracuda;
 using System.Linq;
-using System.IO;
 
 namespace kl2c
 {
@@ -12,6 +11,13 @@ namespace kl2c
 	{
 		public readonly Model runtimeModel;
 		private IWorker worker;
+
+		public struct YoloFace
+		{
+			public Rect patch;
+			public float detection;
+			public float[] confidence;
+		}
 
 		public (int, int) Size => (runtimeModel.inputs[0].shape[6], runtimeModel.inputs[0].shape[5]);
 
@@ -47,11 +53,26 @@ namespace kl2c
 
 		}
 		int labelCount;
-
-		public IEnumerable<Rect> Execute(Texture inputTexture, float threshold, float[] confidenceThreshold = null)
+		public IEnumerable<Rect> Execute(Texture inputTexture, float threshold, float[] confidence = null)
 		{
-			if (null != confidenceThreshold)
-				Debug.Assert(confidenceThreshold.Length == labelCount);
+			if (null != confidence)
+				Debug.Assert(confidence.Length == labelCount);
+
+			var classes = Enumerable.Range(0, labelCount).ToList();
+
+			return Invoke(inputTexture)
+				.Where(p =>
+					(p.detection > threshold)
+					&& (null == confidence || classes.All(i => confidence[i] >= p.confidence[i])))
+					.Select(p =>
+					{
+						var patch = p.patch;
+						patch.y = inputTexture.height - patch.y;
+						return patch;
+					});
+		}
+		public IEnumerable<YoloFace> Invoke(Texture inputTexture)
+		{
 			Tensor inputTensor = new Tensor(inputTexture, channels: 3);
 
 			// Execute the model with the input tensor
@@ -61,29 +82,19 @@ namespace kl2c
 			Tensor outputTensor = worker.PeekOutput();
 
 			// 
-			var tree =
-				Transpose(5 + labelCount, outputTensor)
-					.Where(p => p.Item2 >= threshold)
-					.Where(p =>
-					{
-						var confidenceValue = p.Item3;
-						Debug.Assert(confidenceValue.Length == labelCount);
-						return (Enumerable.Range(0, labelCount).Where(i => confidenceValue[i] >= (null == confidenceThreshold ? threshold : confidenceThreshold[i])).ToList().Count > 0);
-					})
-					.Select(p => p.Item1)
-					.Select(patch =>
-					{
-						patch.y = inputTexture.height - patch.y;
-						return patch;
-					})
-					.ToList();
+			foreach (var face in Transpose(5 + labelCount, outputTensor))
+				yield return face;
+
 
 			// Dispose of the input tensor to free resources
 			inputTensor.Dispose();
 			outputTensor.Dispose();
-
-			return tree;
 		}
+
+
+
+
+
 
 		/// <summary>
 		/// 
@@ -91,7 +102,7 @@ namespace kl2c
 		/// <param name="width">5 + number of classes</param>
 		/// <param name="floats">outputTensor.ToReadOnlyArray()</param>
 		/// <returns></returns>
-		private static IEnumerable<(Rect, float, float[])> Transpose(int width, Tensor outputTensor)
+		private static IEnumerable<YoloFace> Transpose(int width, Tensor outputTensor)
 		{
 			var floats = outputTensor.ToReadOnlyArray();
 			var l = floats.Length;
@@ -111,13 +122,21 @@ namespace kl2c
 					.ToArray();
 
 				// create teh result valeu thing
-				return (new Rect()
+				var face = new YoloFace()
 				{
-					x = entry[0],
-					y = entry[1],
-					width = entry[2],
-					height = entry[3],
-				}, entry[4], tail.Select(h => floats[i + h]).ToArray());
+					patch = new Rect()
+					{
+						x = entry[0],
+						y = entry[1],
+						width = entry[2],
+						height = entry[3],
+					},
+					detection = entry[4],
+					confidence = tail.Select(h => floats[i + h]).ToArray()
+				};
+
+				Debug.Assert(face.confidence.Length == (width - 5));
+				return face;
 			});
 		}
 
