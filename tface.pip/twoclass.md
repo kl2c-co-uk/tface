@@ -15,7 +15,7 @@ the yolo5wider() method creates the datapoints - set the class there
 def process_datapoint() has a line where it writes that out
 - that's fine
 
-tried to setup a home-training machine - but - there's a bios password
+tried to setup a home-training machine. i'm going to fork the project and send that tot he training m achine
 
 YoloPipe.cs will need to be updated to handle the extra dimension. i should also fix the bubbles and allow "default accept" for this.
 
