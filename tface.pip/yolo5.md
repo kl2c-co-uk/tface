@@ -34,7 +34,7 @@ conda create --prefix target/pytorch python=3.8
 
 conda activate target/pytorch
 
-conda install -y pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia
+conda install -y pytorch torchvision torchaudio cudatoolkit=11.7 -c pytorch -c nvidia -c conda-forge
 
 pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt
 pip install -r yolo5.txt
