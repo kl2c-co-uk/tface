@@ -62,10 +62,24 @@ public class TensorScript : MonoBehaviour
 		if (null == outputTexture2D)
 			outputMaterial.mainTexture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
 
-		// fill it randomly
-		outputTexture2D.Fill(UnityEngine.Color.black);
+		// fill it with a solid colour
+		 outputTexture2D.Fill(UnityEngine.Color.black);
+
+		// copy the webcamtex to the output
+		for (int i = 0; i < webcamTexture.width; i++)
+			for (int j = 0; j < webcamTexture.height; j++)
+				outputTexture2D.SetPixel(i, j, webcamTexture.GetPixel(i, j));
+
+		//
 		outputTexture2D.Confetti(detectionResults);
 		// outputTexture2D.FaceOvals(detectionResults);
+
+		// draw a yellow border to check my assumptions
+		for (int i = 0; i < webcamTexture.width; i++)
+			for (int j = 0; j < webcamTexture.height; j++)
+				if (i < 5 || j < 5)
+					outputTexture2D.SetPixel(i, j, UnityEngine.Color.yellow);//.GetPixel(i, j));
+
 
 		// push the changes to the GPU
 		outputTexture2D.Apply();

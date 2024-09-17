@@ -123,8 +123,6 @@ namespace kl2c
 			var head = body.Take(5).ToArray();
 			var tail = body.Drop(5).ToArray();
 
-
-
 			return Enumerable.Range(0, count).Fork(i =>
 			{
 				// compute the entry
@@ -132,7 +130,7 @@ namespace kl2c
 					.Select(h => floats[i + h])
 					.ToArray();
 
-				// create teh result valeu thing
+				// create the result valeu thing
 				var face = new YoloFace()
 				{
 					patch = new Rect()
