@@ -137,8 +137,8 @@ namespace kl2c
 					{
 						x = entry[0],
 						y = entry[1],
-						width = entry[2],
-						height = entry[3],
+						width = (entry[2] - entry[0]),
+						height = (entry[3] - entry[1]),
 					},
 					detection = entry[4],
 					confidence = tail.Select(h => floats[i + h]).ToArray()

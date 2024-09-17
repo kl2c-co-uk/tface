@@ -189,10 +189,14 @@ namespace kl2c
 				// loop throught all pixels in the patch
 				for (int x = (int)rectangle.xMin; x < (int)rectangle.xMax; ++x)
 					for (int y = (int)rectangle.yMin; y < (int)rectangle.yMax; ++y)
-
+					{
 						//
-						if (0 <= x && x < width && 0 <= y && y < height)
-							target.SetPixel(x, y, colour);
+						if (!(0 <= x && x < width && 0 <= y && y < height))
+							// if it's oob skip it
+							continue;
+
+						target.SetPixel(x, y, colour);
+					}
 			}
 		}
 	}
