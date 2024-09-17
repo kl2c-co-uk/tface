@@ -97,7 +97,9 @@ namespace kl2c
 
 
 		/// <summary>
+		/// transpose the output tensor to the corrected form
 		/// 
+		/// this method is poorly named (maybe)
 		/// </summary>
 		/// <param name="width">5 + number of classes</param>
 		/// <param name="floats">outputTensor.ToReadOnlyArray()</param>
@@ -106,16 +108,22 @@ namespace kl2c
 		{
 			var floats = outputTensor.ToReadOnlyArray();
 
-			if(false)throw new Exception("??? https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L130-L233");
+
+			if (false) throw new Exception("??? https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L130-L233");
 
 			var l = floats.Length;
 			var count = l / width;
 
+			Debug.Assert(
+				// if this fails then the dimensionality of the output it wrong
+				0 == (l % width));
+
+			// pre-compute some indicies here
 			var body = Enumerable.Range(0, width).Select(h => h * count);
-
 			var head = body.Take(5).ToArray();
-
 			var tail = body.Drop(5).ToArray();
+
+
 
 			return Enumerable.Range(0, count).Fork(i =>
 			{
