@@ -106,7 +106,7 @@ namespace kl2c
 		{
 			var floats = outputTensor.ToReadOnlyArray();
 
-			throw new Exception("??? https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L130-L233");
+			if(false)throw new Exception("??? https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L130-L233");
 
 			var l = floats.Length;
 			var count = l / width;

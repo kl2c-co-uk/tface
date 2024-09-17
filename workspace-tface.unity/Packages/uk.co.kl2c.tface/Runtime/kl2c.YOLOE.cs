@@ -179,13 +179,21 @@ namespace kl2c
 			UnityEngine.Color.yellow,
 			};
 
-			patches.Each(rectangle =>
+			var width = target.width;
+			var height = target.height;
+			foreach (var rectangle in patches)
 			{
+				// select one colour for each patch
 				var colour = colours[random.Next(0, colours.Length)];
+
+				// loop throught all pixels in the patch
 				for (int x = (int)rectangle.xMin; x < (int)rectangle.xMax; ++x)
 					for (int y = (int)rectangle.yMin; y < (int)rectangle.yMax; ++y)
-						target.SetPixel(x, y, colour);
-			});
+
+						//
+						if (0 <= x && x < width && 0 <= y && y < height)
+							target.SetPixel(x, y, colour);
+			}
 		}
 	}
 }
