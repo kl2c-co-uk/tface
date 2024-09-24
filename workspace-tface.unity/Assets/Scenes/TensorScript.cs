@@ -59,29 +59,18 @@ public class TensorScript : MonoBehaviour
 		// Convert the webcam texture to a Tensor
 		Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
 
-
-		//var detectionResults = yoloPipe.Execute(inputTesorRenderTexture, DetectionThreshold).ToList();
-		//Debug.Log(detectionResults.Count);
-
-
 		// do the deteaction, but, with NMS
 		var detectionResults =
 			yoloPipe.Invoke(inputTesorRenderTexture)
 
-			// take out the results that're beneaht
+			// take out the results that're not confident enough
 			.Where(p => p.detection > DetectionThreshold)
 
-
-			// sort them and do NMS
-			// .NonMaxSuppression()
 
 			.Select(p => p.patch)
 
 			//
 			.ToArray();
-
-
-
 
 		// create thge output texture if we need to
 		if (null == outputTexture2D)

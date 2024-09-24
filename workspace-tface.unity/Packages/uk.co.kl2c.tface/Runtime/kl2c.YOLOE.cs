@@ -87,7 +87,6 @@ namespace kl2c
 			target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => colour).ToArray());
 		}
 
-
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches)
 		{
 			var clear = UnityEngine.Color.black;
@@ -96,7 +95,6 @@ namespace kl2c
 			solid.a = 1;
 			target.FaceOvals(patches, clear, solid);
 		}
-
 
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches, UnityEngine.Color clear, UnityEngine.Color solid)
 		{
@@ -127,32 +125,6 @@ namespace kl2c
 					}
 			});
 		}
-
-		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces)
-		{
-			return faces.NonMaxSuppression(p => p.confidence.Max());
-		}
-
-		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces, System.Func<YoloPipe.YoloFace, float> weight)
-		{
-			var seen = new HashSet<Rect>();
-
-			foreach (var face in faces.OrderBy(p => -weight(p)))
-			{
-				var fail = true;
-
-				foreach (var used in seen)
-					if (fail = used.Overlaps(face.patch))
-						break;
-
-				if (fail)
-					continue;
-
-				seen.Add(face.patch);
-				yield return face;
-			}
-		}
-
 
 		/// <summary>
 		/// fill in faces with random boxes. used fur debugging (sorry)

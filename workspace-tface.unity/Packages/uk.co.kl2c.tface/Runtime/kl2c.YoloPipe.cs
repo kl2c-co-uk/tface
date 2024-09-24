@@ -28,14 +28,14 @@ namespace kl2c
 			worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
 			// check the model size
-			Debug.Assert(1 == runtimeModel.inputs.Count);
-			Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
+			Debug.Assert(1 == runtimeModel.inputs.Count, "input counts wrong");
+			Debug.Assert(runtimeModel.inputs[0].shape.Length == 8, "output thinige wrong - not in the good way");
 
 			// these should be 1
 			for (int i = 0; i < 5; ++i)
 				Debug.Assert(1 == runtimeModel.inputs[0].shape[i]);
 
-			Debug.Assert(3 == runtimeModel.inputs[0].shape[7]);
+			Debug.Assert(3 == runtimeModel.inputs[0].shape[7], "if this fails - it's not rgb?");
 
 			// something(s) in here should dictate the "6" size, but, i dun't know what
 			string output = "outputs (" + runtimeModel.outputs.Count + ")";
@@ -49,28 +49,11 @@ namespace kl2c
 
 			labelCount = shape[6] - 5;
 			Debug.Assert(1 <= labelCount);
-			Debug.Assert(2268 == shape[7]);
+			Debug.Assert(2268 == shape[7], "shape7 was wrong; did i change the resuloution?");
 
 		}
 		int labelCount;
-		public IEnumerable<Rect> Execute(Texture inputTexture, float threshold, float[] confidence = null)
-		{
-			if (null != confidence)
-				Debug.Assert(confidence.Length == labelCount);
-
-			var classes = Enumerable.Range(0, labelCount).ToList();
-
-			return Invoke(inputTexture)
-				.Where(p =>
-					(p.detection > threshold)
-					&& (null == confidence || classes.All(i => confidence[i] >= p.confidence[i])))
-					.Select(p =>
-					{
-						var patch = p.patch;
-						//patch.y = inputTexture.height - patch.y;
-						return patch;
-					});
-		}
+		
 		public IEnumerable<YoloFace> Invoke(Texture inputTexture)
 		{
 			Tensor inputTensor = new Tensor(inputTexture, channels: 3);

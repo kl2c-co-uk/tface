@@ -39,6 +39,8 @@ public class OterhTest : MonoBehaviour
 		var outTexture = new Texture2D(inputRenderTexture.width, inputRenderTexture.height);
 		otherResult.mainTexture = outTexture;
 
+		throw new System.Exception("??? - redork this");
+#if false
 		var detectionResults = yoloPipe.Execute(inputRenderTexture, DetectionThreshold);
 
 		// fill it randomly
@@ -48,5 +50,6 @@ public class OterhTest : MonoBehaviour
 		outTexture.Apply();
 
 		Destroy(inputRenderTexture);
+#endif
 	}
 }
