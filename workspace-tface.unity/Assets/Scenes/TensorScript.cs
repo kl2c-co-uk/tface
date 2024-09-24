@@ -66,7 +66,7 @@ public class TensorScript : MonoBehaviour
 			// take out the results that're not confident enough
 			.Where(p => p.detection > DetectionThreshold)
 
-
+			// 
 			.Select(p => p.patch)
 
 			//
@@ -96,12 +96,9 @@ public class TensorScript : MonoBehaviour
 					{
 						t = y;
 
-						var q = i;
-						var r = webcamTexture.height - j;
+						var colour = webcamTexture.GetPixel(i, j);
 
-						var colour = webcamTexture.GetPixel(q, r);
-						// if (0 <= x && x < outputTexture2D.width && 0 <= y && y < outputTexture2D.height)
-							outputTexture2D.SetPixel(x, y, colour);
+						outputTexture2D.SetPixel(x, y, colour);
 					}
 				}
 			}

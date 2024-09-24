@@ -53,7 +53,7 @@ namespace kl2c
 
 		}
 		int labelCount;
-		
+
 		public IEnumerable<YoloFace> Invoke(Texture inputTexture)
 		{
 			Tensor inputTensor = new Tensor(inputTexture, channels: 3);
@@ -65,7 +65,7 @@ namespace kl2c
 			Tensor outputTensor = worker.PeekOutput();
 
 			// 
-			foreach (var face in Transpose(5 + labelCount, outputTensor))
+			foreach (var face in Transpose(5 + labelCount, inputTexture.height, outputTensor))
 				yield return face;
 
 
@@ -87,7 +87,7 @@ namespace kl2c
 		/// <param name="width">5 + number of classes</param>
 		/// <param name="floats">outputTensor.ToReadOnlyArray()</param>
 		/// <returns></returns>
-		private static IEnumerable<YoloFace> Transpose(int width, Tensor outputTensor)
+		private static IEnumerable<YoloFace> Transpose(int width, int height, Tensor outputTensor)
 		{
 			var floats = outputTensor.ToReadOnlyArray();
 
@@ -113,15 +113,22 @@ namespace kl2c
 					.Select(h => floats[i + h])
 					.ToArray();
 
+				var face_y = (height - entry[1]);
+
+				var face_h = entry[3] - entry[1];
+				face_y -= face_h;
+
 				// create the result valeu thing
 				var face = new YoloFace()
 				{
+
+
 					patch = new Rect()
 					{
 						x = entry[0],
-						y = entry[1],
+						y = face_y,
 						width = (entry[2] - entry[0]),
-						height = (entry[3] - entry[1]),
+						height = face_h,
 					},
 					detection = entry[4],
 					confidence = tail.Select(h => floats[i + h]).ToArray()
