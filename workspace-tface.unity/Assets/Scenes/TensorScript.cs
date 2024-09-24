@@ -77,11 +77,14 @@ public class TensorScript : MonoBehaviour
 			outputRawImage.texture = outputTexture2D = outputTexture2D = new Texture2D(inputTesorRenderTexture.width, inputTesorRenderTexture.height);
 
 		// fill it with a solid colour
+		var fill = UnityEngine.Color.black;
+		fill.a = 0;
 		outputTexture2D.Fill(UnityEngine.Color.black);
 
 		// copy the webcamtex to the output
 
 		int l = -1, t = -1; // l and t are used tro avoid drawing redundant pixels
+		if(false)
 		for (int i = 0; i < webcamTexture.width; i++)
 		{
 			int x = (int)((i / (float)webcamTexture.width) * outputTexture2D.width);
@@ -108,8 +111,8 @@ public class TensorScript : MonoBehaviour
 
 
 		//
-		outputTexture2D.Confetti(detectionResults);
-		// outputTexture2D.FaceOvals(detectionResults);
+		//outputTexture2D.Confetti(detectionResults);
+		outputTexture2D.FaceOvals(detectionResults);
 
 		// draw a yellow border to check my assumptions
 		if (false)
@@ -117,9 +120,6 @@ public class TensorScript : MonoBehaviour
 				for (int j = 0; j < webcamTexture.height; j++)
 					if (i < 5 || j < 5)
 						outputTexture2D.SetPixel(i, j, UnityEngine.Color.yellow);//.GetPixel(i, j));
-
-
-
 
 		// push the changes to the GPU
 		outputTexture2D.Apply();
@@ -131,3 +131,4 @@ public class TensorScript : MonoBehaviour
 		yoloPipe?.Dispose();
 	}
 }
+

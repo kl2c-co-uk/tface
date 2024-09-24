@@ -90,15 +90,15 @@ namespace kl2c
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches)
 		{
 			var clear = UnityEngine.Color.black;
-			var solid = UnityEngine.Color.white;
 			clear.a = 0;
+			var solid = UnityEngine.Color.white;
 			solid.a = 1;
 			target.FaceOvals(patches, clear, solid);
 		}
 
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches, UnityEngine.Color clear, UnityEngine.Color solid)
 		{
-			patches.Each(rectangle =>
+			foreach(var rectangle in patches)
 			{
 				float w = 2.0f / (float)rectangle.width;
 				float h = 2.0f / (float)rectangle.height;
@@ -123,7 +123,7 @@ namespace kl2c
 						if (o.a < c.a)
 							target.SetPixel(x, y, c);
 					}
-			});
+			};
 		}
 
 		/// <summary>
