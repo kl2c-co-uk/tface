@@ -1006,7 +1006,7 @@ MonoBehaviour:
   cube2: {fileID: 665564741}
   webcamDisplay: {fileID: 543840717}
   outputTexture2D: {fileID: 0}
-  DetectionThreshold: 0.3
+  DetectionThreshold: 0.125
   NmsThreshold: 0.5
   ConfidenceThreshold: 0.4
   outputRawImage: {fileID: 1684500017}

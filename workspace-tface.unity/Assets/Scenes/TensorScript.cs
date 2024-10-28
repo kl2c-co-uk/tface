@@ -59,18 +59,16 @@ public class TensorScript : MonoBehaviour
 		// Convert the webcam texture to a Tensor
 		Graphics.Blit(source: webcamTexture, dest: inputTesorRenderTexture);
 
-		// do the deteaction, but, with NMS
-		var detectionResults =
-			yoloPipe.Invoke(inputTesorRenderTexture)
+		//
+		var detectionResults = yoloPipe.Invoke(inputTesorRenderTexture);
+
+		// filter low-T patches
+		detectionResults = detectionResults
 
 			// take out the results that're not confident enough
-			.Where(p => p.detection > DetectionThreshold)
+			.Where(p => p.detection > DetectionThreshold);
 
-			// 
-			.Select(p => p.patch)
 
-			//
-			.ToArray();
 
 		// create thge output texture if we need to
 		if (null == outputTexture2D)
@@ -82,37 +80,33 @@ public class TensorScript : MonoBehaviour
 		outputTexture2D.Fill(UnityEngine.Color.black);
 
 		// copy the webcamtex to the output
-
 		int l = -1, t = -1; // l and t are used tro avoid drawing redundant pixels
-		if(false)
-		for (int i = 0; i < webcamTexture.width; i++)
-		{
-			int x = (int)((i / (float)webcamTexture.width) * outputTexture2D.width);
-			if (x != l)
+		if (false)
+			for (int i = 0; i < webcamTexture.width; i++)
 			{
-				l = x;
-				for (int j = 0; j < webcamTexture.height; j++)
+				int x = (int)((i / (float)webcamTexture.width) * outputTexture2D.width);
+				if (x != l)
 				{
-					int y = (int)((j / (float)webcamTexture.height) * outputTexture2D.height);
-
-					if (y != t)
+					l = x;
+					for (int j = 0; j < webcamTexture.height; j++)
 					{
-						t = y;
+						int y = (int)((j / (float)webcamTexture.height) * outputTexture2D.height);
 
-						var colour = webcamTexture.GetPixel(i, j);
+						if (y != t)
+						{
+							t = y;
 
-						outputTexture2D.SetPixel(x, y, colour);
+							var colour = webcamTexture.GetPixel(i, j);
+
+							outputTexture2D.SetPixel(x, y, colour);
+						}
 					}
 				}
 			}
-		}
-
-
-
 
 		//
 		//outputTexture2D.Confetti(detectionResults);
-		outputTexture2D.FaceOvals(detectionResults);
+		outputTexture2D.FaceOvals(detectionResults.Select(p => p.patch));
 
 		// draw a yellow border to check my assumptions
 		if (false)
