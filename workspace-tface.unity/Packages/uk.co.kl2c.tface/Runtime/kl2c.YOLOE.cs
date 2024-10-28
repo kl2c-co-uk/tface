@@ -87,20 +87,18 @@ namespace kl2c
 			target.SetPixels(new UnityEngine.Color[target.width * target.height].Each(_ => colour).ToArray());
 		}
 
-
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches)
 		{
 			var clear = UnityEngine.Color.black;
-			var solid = UnityEngine.Color.white;
 			clear.a = 0;
+			var solid = UnityEngine.Color.white;
 			solid.a = 1;
 			target.FaceOvals(patches, clear, solid);
 		}
 
-
 		public static void FaceOvals(this Texture2D target, IEnumerable<Rect> patches, UnityEngine.Color clear, UnityEngine.Color solid)
 		{
-			patches.Each(rectangle =>
+			foreach(var rectangle in patches)
 			{
 				float w = 2.0f / (float)rectangle.width;
 				float h = 2.0f / (float)rectangle.height;
@@ -125,34 +123,8 @@ namespace kl2c
 						if (o.a < c.a)
 							target.SetPixel(x, y, c);
 					}
-			});
+			};
 		}
-
-		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces)
-		{
-			return faces.NonMaxSuppression(p => p.confidence.Max());
-		}
-
-		public static IEnumerable<YoloPipe.YoloFace> NonMaxSuppression(this IEnumerable<YoloPipe.YoloFace> faces, System.Func<YoloPipe.YoloFace, float> weight)
-		{
-			var seen = new HashSet<Rect>();
-
-			foreach (var face in faces.OrderBy(p => -weight(p)))
-			{
-				var fail = true;
-
-				foreach (var used in seen)
-					if (fail = used.Overlaps(face.patch))
-						break;
-
-				if (fail)
-					continue;
-
-				seen.Add(face.patch);
-				yield return face;
-			}
-		}
-
 
 		/// <summary>
 		/// fill in faces with random boxes. used fur debugging (sorry)
@@ -179,13 +151,25 @@ namespace kl2c
 			UnityEngine.Color.yellow,
 			};
 
-			patches.Each(rectangle =>
+			var width = target.width;
+			var height = target.height;
+			foreach (var rectangle in patches)
 			{
+				// select one colour for each patch
 				var colour = colours[random.Next(0, colours.Length)];
+
+				// loop throught all pixels in the patch
 				for (int x = (int)rectangle.xMin; x < (int)rectangle.xMax; ++x)
 					for (int y = (int)rectangle.yMin; y < (int)rectangle.yMax; ++y)
+					{
+						//
+						if (!(0 <= x && x < width && 0 <= y && y < height))
+							// if it's oob skip it
+							continue;
+
 						target.SetPixel(x, y, colour);
-			});
+					}
+			}
 		}
 	}
 }

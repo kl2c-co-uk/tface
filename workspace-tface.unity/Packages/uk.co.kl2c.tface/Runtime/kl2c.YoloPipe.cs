@@ -28,14 +28,14 @@ namespace kl2c
 			worker = WorkerFactory.CreateWorker(WorkerFactory.Type.ComputePrecompiled, runtimeModel);
 
 			// check the model size
-			Debug.Assert(1 == runtimeModel.inputs.Count);
-			Debug.Assert(runtimeModel.inputs[0].shape.Length == 8);
+			Debug.Assert(1 == runtimeModel.inputs.Count, "input counts wrong");
+			Debug.Assert(runtimeModel.inputs[0].shape.Length == 8, "output thinige wrong - not in the good way");
 
 			// these should be 1
 			for (int i = 0; i < 5; ++i)
 				Debug.Assert(1 == runtimeModel.inputs[0].shape[i]);
 
-			Debug.Assert(3 == runtimeModel.inputs[0].shape[7]);
+			Debug.Assert(3 == runtimeModel.inputs[0].shape[7], "if this fails - it's not rgb?");
 
 			// something(s) in here should dictate the "6" size, but, i dun't know what
 			string output = "outputs (" + runtimeModel.outputs.Count + ")";
@@ -49,28 +49,11 @@ namespace kl2c
 
 			labelCount = shape[6] - 5;
 			Debug.Assert(1 <= labelCount);
-			Debug.Assert(2268 == shape[7]);
+			Debug.Assert(2268 == shape[7], "shape7 was wrong; did i change the resuloution?");
 
 		}
 		int labelCount;
-		public IEnumerable<Rect> Execute(Texture inputTexture, float threshold, float[] confidence = null)
-		{
-			if (null != confidence)
-				Debug.Assert(confidence.Length == labelCount);
 
-			var classes = Enumerable.Range(0, labelCount).ToList();
-
-			return Invoke(inputTexture)
-				.Where(p =>
-					(p.detection > threshold)
-					&& (null == confidence || classes.All(i => confidence[i] >= p.confidence[i])))
-					.Select(p =>
-					{
-						var patch = p.patch;
-						patch.y = inputTexture.height - patch.y;
-						return patch;
-					});
-		}
 		public IEnumerable<YoloFace> Invoke(Texture inputTexture)
 		{
 			Tensor inputTensor = new Tensor(inputTexture, channels: 3);
@@ -82,7 +65,7 @@ namespace kl2c
 			Tensor outputTensor = worker.PeekOutput();
 
 			// 
-			foreach (var face in Transpose(5 + labelCount, outputTensor))
+			foreach (var face in Transpose(5 + labelCount, inputTexture.height, outputTensor))
 				yield return face;
 
 
@@ -97,21 +80,30 @@ namespace kl2c
 
 
 		/// <summary>
+		/// transpose the output tensor to the corrected form
 		/// 
+		/// this method is poorly named (maybe)
 		/// </summary>
 		/// <param name="width">5 + number of classes</param>
 		/// <param name="floats">outputTensor.ToReadOnlyArray()</param>
 		/// <returns></returns>
-		private static IEnumerable<YoloFace> Transpose(int width, Tensor outputTensor)
+		private static IEnumerable<YoloFace> Transpose(int width, int height, Tensor outputTensor)
 		{
 			var floats = outputTensor.ToReadOnlyArray();
+
+
+			if (false) throw new Exception("??? https://github.com/FaceONNX/FaceONNX/blob/main/netstandard/FaceONNX/face/classes/FaceDetector.cs#L130-L233");
+
 			var l = floats.Length;
 			var count = l / width;
 
+			Debug.Assert(
+				// if this fails then the dimensionality of the output it wrong
+				0 == (l % width));
+
+			// pre-compute some indicies here
 			var body = Enumerable.Range(0, width).Select(h => h * count);
-
 			var head = body.Take(5).ToArray();
-
 			var tail = body.Drop(5).ToArray();
 
 			return Enumerable.Range(0, count).Fork(i =>
@@ -121,15 +113,22 @@ namespace kl2c
 					.Select(h => floats[i + h])
 					.ToArray();
 
-				// create teh result valeu thing
+				var face_y = (height - entry[1]);
+
+				var face_h = entry[3] - entry[1];
+				face_y -= face_h;
+
+				// create the result valeu thing
 				var face = new YoloFace()
 				{
+
+
 					patch = new Rect()
 					{
 						x = entry[0],
-						y = entry[1],
-						width = entry[2],
-						height = entry[3],
+						y = face_y,
+						width = (entry[2] - entry[0]),
+						height = face_h,
 					},
 					detection = entry[4],
 					confidence = tail.Select(h => floats[i + h]).ToArray()
