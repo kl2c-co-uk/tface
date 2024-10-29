@@ -87,7 +87,7 @@ namespace kl2c
 		/// <param name="width">5 + number of classes</param>
 		/// <param name="floats">outputTensor.ToReadOnlyArray()</param>
 		/// <returns></returns>
-		private static IEnumerable<YoloFace> Transpose(int width, int height, Tensor outputTensor)
+		private virtual IEnumerable<YoloFace> Transpose(int width, int height, Tensor outputTensor)
 		{
 			var floats = outputTensor.ToReadOnlyArray();
 
