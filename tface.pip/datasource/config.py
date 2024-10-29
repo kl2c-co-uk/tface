@@ -26,10 +26,11 @@ INPUT_SIZE = 192
 BATCH_SIZE = 64
 
 EPOCHS = 80 # 40 was recomended. 80 for 
+EPOCHS = 2 # 0 # 40 was recomended. 80 for 
 
 CLASSES = [
     'wider_face',
-    'cartoon_face',
+    # 'cartoon_face',
 ]
 
 
@@ -40,7 +41,7 @@ CLASSES = [
 DATASETS = Blurb(
     WIDER_train = True,
     WIDER_val = True,
-    iCartoon = True,
+    iCartoon = False,
 )
 
 
