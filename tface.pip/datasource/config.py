@@ -25,8 +25,7 @@ from datasource import todo, Blurb
 INPUT_SIZE = 192
 BATCH_SIZE = 64
 
-EPOCHS = 80 # 40 was recomended. 80 for 
-EPOCHS = 2 # 0 # 40 was recomended. 80 for 
+EPOCHS = 40 # 40 was recomended
 
 CLASSES = [
     'wider_face',
