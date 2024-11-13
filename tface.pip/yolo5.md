@@ -202,3 +202,42 @@ names:
 
 ```
 
+
+
+
+
+
+
+
+
+## convert pt to onnx
+
+
+NOWAIT; this is already done at the tail of the train
+
+	result = subprocess.run([
+			"python", "export.py",
+			"--weights", str(weights),
+			"--img-size", str(config.INPUT_SIZE),
+			"--batch-size", str(config.EXPORT_BATCH_SIZE),
+			"--device", "cpu",  # or "cuda" for GPU
+								# ... pal doesn't think this matters ...
+
+			'--opset', '9',	# unix's barracuda is OLD so use the old version
+
+			"--include", "onnx"  # specify the format to export
+		],
+		cwd=git,
+		# capture_output=True,
+		# text=True
+	)
+
+
+git = 
+    C:\Users\peter\Desktop\tface\tface.pip\target\yolov5
+weights = 
+    "C:\Users\peter\Desktop\tface\tface.pip\target\yolov5\runs\train\exp6\weights\best.pt"
+INPUT_SIZE =
+    192
+EXPORT_BATCH_SIZE = 1
+
