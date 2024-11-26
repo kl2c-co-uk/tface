@@ -40,6 +40,13 @@ pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requi
 pip install -r yolo5.txt
 ```
 
+$ python3 -m venv target/pytorch
+$ source target/pytorch/bin/activate
+$ pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117
+$ pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt
+
+
+
 
 > the `target/` dir should be ignored by version control.  it gets really big. 
 
