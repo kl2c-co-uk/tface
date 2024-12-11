@@ -40,10 +40,8 @@ pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requi
 pip install -r yolo5.txt
 ```
 
-$ python3 -m venv target/pytorch
-$ source target/pytorch/bin/activate
-$ pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117
-$ pip install -r https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt
+> currently trying to use conda on debian to train there
+
 
 
 
